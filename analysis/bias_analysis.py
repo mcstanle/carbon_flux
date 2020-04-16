@@ -5,7 +5,7 @@ This script should be able to do the following
 
 Author        : Mike Stanley
 Created       : April 14, 2020
-Last Modified : April 14, 2020
+Last Modified : April 16, 2020
 
 ===============================================================================
 - USE
@@ -61,8 +61,8 @@ def read_sf_objs(base_df_dir):
 
 def create_sf_arr(list_of_sf_objs, var_oi='IJ-EMS-$_CO2bal'):
     """
-    Creates a 3D stacked array for one month of scale factors
-    across different OSSEs
+    Creates a 4D stacked array all scale factors across all OSSEs
+    and months.
 
     Parameters:
         list_of_sf_objs (list) : list of pnc objects
@@ -79,7 +79,7 @@ def create_sf_arr(list_of_sf_objs, var_oi='IJ-EMS-$_CO2bal'):
       months of scale factors TODO
     """
     # extract the scale factors from each object
-    extr_arrs = [sf_i.variables[var_oi].array()[0, 0, :, :]
+    extr_arrs = [sf_i.variables[var_oi].array()[0, :, :, :]
                  for sf_i in list_of_sf_objs]
 
     # stack the above
@@ -97,22 +97,34 @@ def find_bias(sf_stack, opt_sf):
     Finds difference between avg(sf) and optimal sf for one 46x72 grid
 
     Parameters:
-        sf_stack (numpy array) : nx46x72 array with inverted scale factors
-        opt_sf   (numpy array) : 46x72 optimal scale factor array
+        sf_stack (numpy array) : nxMx46x72 array with inverted scale factors
+                                 (n=number OSSEs and M=number of months)
+        opt_sf   (numpy array) : Mx46x72 optimal scale factor array
 
     Returns:
-        46-72 numpy array of E(sf) - opt_sf
+        Mx46x76 numpy array of E(sf) - opt_sf
+
+    NOTE:
+     - we assume that the 0th index of sf_stack is the OSSE iterations
     """
-    assert opt_sf.shape == (46, 72)
-    assert sf_stack[0, :, :].shape == (46, 72)
+    assert sf_stack.shape[1] == opt_sf.shape[0]
+
+    # make sure the dimensions are correct
+    if opt_sf.shape[1] != 46:
+
+        # the only problem equiped to handle is lat/lon switch
+        opt_sf_proc = np.swapaxes(opt_sf, axis1=1, axis2=2)
+
+    else:
+        opt_sf_proc = opt_sf.copy()
 
     # find mean of the given stack of sf draws
     sf_stack_avg = sf_stack.mean(axis=0)
 
-    return sf_stack_avg - opt_sf
+    return sf_stack_avg - opt_sf_proc
 
 
-def bias_map(bias_arr, lon, lat, write_loc):
+def bias_map(bias_arr, lon, lat, write_loc=None):
     """
     Creates a geographic map of biases given a 46x72 bias array
 
@@ -122,7 +134,8 @@ def bias_map(bias_arr, lon, lat, write_loc):
         lat      (numpy arr) : latitude array
 
     Returns:
-        Nothing -- prints the map to file
+        Nothing -- prints the map to file if write location is given
+        Otherwise, it provides a mapping step to be build upon if desired.
     """
     assert bias_arr.shape == (46, 72)
 
@@ -137,11 +150,77 @@ def bias_map(bias_arr, lon, lat, write_loc):
     fig.colorbar(contour, ax=ax, orientation='vertical', extend='both')
     ax.add_feature(cfeature.COASTLINE)
 
-    # labels
-    ax.set_title('$\mathbb{E}(c) - c^*$')
+    if write_loc:
+        plt.tight_layout()
+        plt.savefig(write_loc)
 
-    plt.tight_layout()
-    plt.savefig(write_loc)
+
+def bias_map_total(bias_arr, lon, lat, write_loc=None):
+    """
+    Creates a geographic map of biases given a 46x72 bias array
+
+    Parameters:
+        bias_arr  (numpy arr) : 46x72 (latXlon)
+        lon       (numpy arr) : longitude array
+        lat       (numpy arr) : latitude array
+        write_loc (str)       : plot name - if None provides stem
+
+    Returns:
+        Nothing -- prints the map to file
+
+    NOTE:
+    - expects to receive a bias array of form (M, 46, 72)
+    """
+    # check the form of the bias arr
+    assert bias_arr[1] == 46
+    assert bias_arr[2] == 72
+
+    # find average bias across all months
+    sf_bias_tot = bias_arr.mean(axis=0)
+
+    bias_map(
+        bias_arr=sf_bias_tot,
+        lon=lon,
+        lat=lat,
+        write_loc=write_loc
+    )
+
+
+def bias_map_monthly(bias_arr, lon, lat, write_dir):
+    """
+    Creates a geographic map of biases given a 46x72 bias array
+
+    Parameters:
+        bias_arr  (numpy arr) : 46x72 (latXlon)
+        lon       (numpy arr) : longitude array
+        lat       (numpy arr) : latitude array
+        write_dir (str)       : directory where to write plots
+
+    Returns:
+        Nothing -- prints the map to file
+
+    NOTE:
+    - expects to receive a bias array of form (M, 46, 72)
+    """
+    # check the form of the bias arr
+    assert bias_arr[1] == 46
+    assert bias_arr[2] == 72
+
+    # identify the number of months
+    NUM_MONTHS = bias_arr.shape[0]
+
+    # create a plot for each month
+    for month_idx in range(NUM_MONTHS):
+
+        # create the file path
+        file_path = write_dir + '/bias_month_%s' % str(month_idx).zfill(2)
+
+        bias_map(
+            bias_arr=bias_arr,
+            lon=lon,
+            lat=lat,
+            write_loc=file_path
+        )
 
 
 if __name__ == '__main__':
