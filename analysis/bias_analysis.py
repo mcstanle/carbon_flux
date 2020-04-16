@@ -124,18 +124,19 @@ def find_bias(sf_stack, opt_sf):
     return sf_stack_avg - opt_sf_proc
 
 
-def bias_map(bias_arr, lon, lat, write_loc=None):
+def bias_map(bias_arr, lon, lat, title=None, write_loc=None):
     """
     Creates a geographic map of biases given a 46x72 bias array
 
     Parameters:
-        bias_arr (numpy arr) : 46x72 (latXlon)
-        lon      (numpy arr) : longitude array
-        lat      (numpy arr) : latitude array
+        bias_arr  (numpy arr) : 46x72 (latXlon)
+        lon       (numpy arr) : longitude array
+        lat       (numpy arr) : latitude array
+        title     (str)       : (hopefully...) descriptive title
+        write_loc (str)       : file's output location
 
     Returns:
-        Nothing -- prints the map to file if write location is given
-        Otherwise, it provides a mapping step to be build upon if desired.
+        Nothing -- prints the map to file if write location
     """
     assert bias_arr.shape == (46, 72)
 
@@ -150,12 +151,17 @@ def bias_map(bias_arr, lon, lat, write_loc=None):
     fig.colorbar(contour, ax=ax, orientation='vertical', extend='both')
     ax.add_feature(cfeature.COASTLINE)
 
+    if title:
+        ax.set_title(title)
+
+    plt.tight_layout()
     if write_loc:
-        plt.tight_layout()
         plt.savefig(write_loc)
+    else:
+        plt.show()
 
 
-def bias_map_total(bias_arr, lon, lat, write_loc=None):
+def bias_map_total(bias_arr, lon, lat, title=None, write_loc=None):
     """
     Creates a geographic map of biases given a 46x72 bias array
 
@@ -163,6 +169,7 @@ def bias_map_total(bias_arr, lon, lat, write_loc=None):
         bias_arr  (numpy arr) : 46x72 (latXlon)
         lon       (numpy arr) : longitude array
         lat       (numpy arr) : latitude array
+        title     (str)       : (hopefully...) descriptive title
         write_loc (str)       : plot name - if None provides stem
 
     Returns:
@@ -172,8 +179,8 @@ def bias_map_total(bias_arr, lon, lat, write_loc=None):
     - expects to receive a bias array of form (M, 46, 72)
     """
     # check the form of the bias arr
-    assert bias_arr[1] == 46
-    assert bias_arr[2] == 72
+    assert bias_arr.shape[1] == 46
+    assert bias_arr.shape[2] == 72
 
     # find average bias across all months
     sf_bias_tot = bias_arr.mean(axis=0)
@@ -182,6 +189,7 @@ def bias_map_total(bias_arr, lon, lat, write_loc=None):
         bias_arr=sf_bias_tot,
         lon=lon,
         lat=lat,
+        title=title,
         write_loc=write_loc
     )
 
@@ -201,10 +209,14 @@ def bias_map_monthly(bias_arr, lon, lat, write_dir):
 
     NOTE:
     - expects to receive a bias array of form (M, 46, 72)
+    - There is no title capability for these plots
     """
     # check the form of the bias arr
-    assert bias_arr[1] == 46
-    assert bias_arr[2] == 72
+    assert bias_arr.shape[1] == 46
+    assert bias_arr.shape[2] == 72
+
+    # check the the output directory exists
+    assert os.path.isdir(write_dir)
 
     # identify the number of months
     NUM_MONTHS = bias_arr.shape[0]
@@ -216,7 +228,7 @@ def bias_map_monthly(bias_arr, lon, lat, write_dir):
         file_path = write_dir + '/bias_month_%s' % str(month_idx).zfill(2)
 
         bias_map(
-            bias_arr=bias_arr,
+            bias_arr=bias_arr[month_idx, :, :],
             lon=lon,
             lat=lat,
             write_loc=file_path
@@ -227,7 +239,7 @@ if __name__ == '__main__':
 
     # default values
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    RUN_NM = 'JULES_1'
+    RUN_NM = 'JULES_2'
     SF_BASE_DIR = BASE_DIR + '/data/bias_calc_opt_output/' + RUN_NM
     OPT_SF_PATH = BASE_DIR + \
         '/data/optimal_scale_factors/2010_JULES_true_CT_prior/jan_sept.npy'
@@ -251,30 +263,47 @@ if __name__ == '__main__':
     # create the numpy arrays of the scale factors
     print('Creating SF numpy arrays')
     sf_arr, lon, lat = create_sf_arr(list_of_sf_objs=sf_obj)
+    print(sf_arr.shape)
 
     # read in the optimal scale factors
     print('Optimal scale factors read in')
-    opt_sf = np.load(file=args.opt_df_dir)[0, :, :].T
+    opt_sf = np.load(file=args.opt_df_dir)
+    print(opt_sf.shape)
 
     # find the bias
     print('Bias obtained')
-    bias_arr = find_bias(sf_stack=sf_arr, opt_sf=opt_sf)
+    sf_bias = find_bias(sf_stack=sf_arr, opt_sf=opt_sf)
+    print(sf_bias.shape)
 
     # write the bias array
     print('Bias file saved')
-    np.save(file=args.sf_dir + '/data/bias_arr.npy', arr=bias_arr)
+    np.save(file=args.sf_dir + '/data/bias_arr.npy', arr=sf_bias)
 
     # check to see if map location is available
-    map_dir = args.sf_dir + '/total_time_visuals'
+    map_dir = args.sf_dir + '/visualization'
+    month_map_dir = map_dir + '/monthly_plots'
+
     if not os.path.isdir(map_dir):
         os.mkdir(map_dir)
 
-    # output a map
-    map_file_nm = map_dir + '/total_time_bias_map.png'
+    if not os.path.isdir(month_map_dir):
+        os.mkdir(month_map_dir)
+
+    # map over all months
+    map_file_nm = map_dir + '/bias_map_all_months.png'
     print('Writing total time bias map to %s' % map_file_nm)
-    bias_map(
-        bias_arr=bias_arr,
+    bias_map_total(
+        bias_arr=sf_bias,
         lon=lon,
         lat=lat,
+        title='Scale Factor Bias 2010 Jan-Sept relative to Optimal Scale Factors',
         write_loc=map_file_nm
+    )
+
+    # map over individual months
+    bias_map_monthly(
+        bias_arr=sf_bias,
+        lon=lon,
+        lat=lat,
+        write_dir=month_map_dir
     )
