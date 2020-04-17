@@ -5,7 +5,7 @@ This script should be able to do the following
 
 Author        : Mike Stanley
 Created       : April 2, 2020
-Last Modified : April 15, 2020
+Last Modified : April 17, 2020
 
 ===============================================================================
 - USE
@@ -21,6 +21,9 @@ Output files should have the form:
 - GOSAT_OSSE_YYYYMMDD.txt
 This is to match the expected input in the geos-chem code. Different forms of
 the input code should be organized by directory structure.
+
+Apr 17 - added a test functionality to look at how GOSAT observations are
+being perturbed.
 
 ===============================================================================
 """
@@ -397,18 +400,60 @@ def generate_pert_gosat_files(start_date, end_date, origin_dir, save_dir,
         # print('Written: %s' % output_files[idx])
 
 
+def test_gosat_generation(
+    num_iter, start_date, end_date, origin_dir, save_dir, perturb_dir
+):
+    """
+    Generate several realizations to ensure that the perturbed data is
+    behaving in a desireable way.
+
+    Parameters:
+        start_date  (str) : start time in YYYYMMDD
+        end_date    (str) : end time in YYYYMMDD
+        origin_dir  (str) : origin point for unperturbed files
+        save_dir    (str) : directory where the runs will be saved
+        perturb_dir (str) : directory where perturbation arrays are stored
+
+    Returns:
+        - Generated data indexed by run number in new directories in save dir
+        - plots of some arbitrary observations to show distribution
+    """
+    # create new directories for all of the new sets of observations
+    for idx in range(num_iter):
+
+        # directory name
+        dir_nm = save_dir + '/obs/%s' % str(idx).zfill(3)
+
+        # create the directory
+        os.mkdir(dir_nm)
+
+        # create perturbed files
+        generate_pert_gosat_files(
+            start_date=args.date_lb,
+            end_date=args.date_ub,
+            origin_dir=args.base_file_dir,
+            save_dir=dir_nm,
+            perturb_dir=args.perturb_dir,
+            perturb_idx=idx
+        )
+
+
 if __name__ == '__main__':
 
     # default values
     BASE_PATH = '/Users/mikestanley/Research/Carbon_Flux'
-    BASE_FILE_D = BASE_PATH + '/gc_adj_tutorial/OSSE_OBS'
+    BASE_FILE_D = BASE_PATH + '/data/modeled_satellite_obs/JULES_unpert'
     DATE_LB = '20100101'
-    DATE_UB = '20100901'
+    DATE_UB = '20100201'
     MODELED_XCO2 = BASE_PATH + '/data/forward_model_output/satellite_obs/\
 gosat_JULES_201001_201009/gctm.model.01'
-    OUTPUT_DIR = BASE_PATH + '/data/modeled_satellite_obs/JULES_unpert'
+    OUTPUT_DIR = BASE_PATH + '/data/bias_calc_opt_output/testing_gosat_perturb'
     PERTURB = False
     PERTURB_DIR = BASE_PATH + '/data/modeled_satellite_obs/pert_files'
+
+    # testing constants
+    TEST = True
+    NUM_ITER = 200
 
     # initialize the argparser
     parser = argparse.ArgumentParser()
@@ -429,6 +474,9 @@ gosat_JULES_201001_201009/gctm.model.01'
     parser.add_argument('--perturb', type=bool, default=PERTURB)
     parser.add_argument('--perturb_dir', type=str, default=PERTURB_DIR)
     parser.add_argument('--perturb_idx', type=int, default=None)
+
+    # testing arguments
+    parser.add_argument('--test', type=bool, default=TEST)
 
     # parse the given arguments
     args = parser.parse_args()
@@ -455,6 +503,16 @@ gosat_JULES_201001_201009/gctm.model.01'
             f.write(str(datetime.now()) + '\t' +
                     str(first_gosat_file[0][4]))
             f.write('\n')
+
+    elif args.test:
+        test_gosat_generation(
+            num_iter=NUM_ITER,
+            start_date=args.date_lb,
+            end_date=args.date_ub,
+            origin_dir=args.base_file_dir,
+            save_dir=args.output_dir,
+            perturb_dir=args.perturb_dir
+        )
 
     else:
 
