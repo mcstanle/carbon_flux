@@ -49,10 +49,10 @@ def generate_uncertainty_array(obs_errs, num_samples, rand_seed):
     """
     Generates num_samples rows in a 2D array where each column represents an
     observation and each row is a sampled value from the gaussian error
-    distribution, whose variance is defined by the obs_errs array.
+    distribution, whose standard deviation is defined by the obs_errs array.
 
     Parameters:
-        obs_errs    (numpy arr) : error variance for each observation
+        obs_errs    (numpy arr) : error standard deviation for each observation
         num_samples (int)       : number of perturbations to draw from distr
         rand_seed   (int)       : random seed to make these results
                                   reproducible.
@@ -61,10 +61,14 @@ def generate_uncertainty_array(obs_errs, num_samples, rand_seed):
         numpy array with NxK elements
             - N number of perturbs
             - K number of observations
+
+    NOTE:
+    - the uncertainty value that comes from the GOSAT observations is a
+      standard deviation according to brendan.
     """
     # perturbation generator
     num_obs = len(obs_errs)
-    pert_gen = stats.norm(loc=np.zeros(num_obs), scale=np.sqrt(obs_errs))
+    pert_gen = stats.norm(loc=np.zeros(num_obs), scale=obs_errs)
 
     # generate perturbations
     np.random.seed(rand_seed)

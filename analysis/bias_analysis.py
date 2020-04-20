@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
     # default values
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    RUN_NM = 'JULES_2'
+    RUN_NM = 'JULES_3'
     SF_BASE_DIR = BASE_DIR + '/data/bias_calc_opt_output/' + RUN_NM
     OPT_SF_PATH = BASE_DIR + \
         '/data/optimal_scale_factors/2010_JULES_true_CT_prior/jan_sept.npy'
