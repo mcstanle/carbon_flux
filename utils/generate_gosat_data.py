@@ -407,7 +407,7 @@ if __name__ == '__main__':
     MODELED_XCO2 = BASE_PATH + '/data/forward_model_output/satellite_obs/\
 gosat_JULES_201001_201009/gctm.model.01'
     OUTPUT_DIR = BASE_PATH + '/data/modeled_satellite_obs/JULES_unpert'
-    PERTURB = False
+    PERTURB = True
     PERTURB_DIR = BASE_PATH + '/data/modeled_satellite_obs/pert_files'
 
     # initialize the argparser
