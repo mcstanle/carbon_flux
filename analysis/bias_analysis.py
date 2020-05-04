@@ -5,7 +5,7 @@ This script should be able to do the following
 
 Author        : Mike Stanley
 Created       : April 14, 2020
-Last Modified : April 16, 2020
+Last Modified : April 22, 2020
 
 ===============================================================================
 - USE
@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
     # default values
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    RUN_NM = 'JULES_3'
+    RUN_NM = 'JULES_truth_CT_prior_agg_sf_files'
     SF_BASE_DIR = BASE_DIR + '/data/bias_calc_opt_output/' + RUN_NM
     OPT_SF_PATH = BASE_DIR + \
         '/data/optimal_scale_factors/2010_JULES_true_CT_prior/jan_sept.npy'
