@@ -35,9 +35,9 @@ import os
 # plotting
 import matplotlib.pyplot as plt
 from matplotlib import colors
-plt.style.use('ggplot')
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+plt.style.use('ggplot')
 
 
 def read_sf_objs(base_df_dir):

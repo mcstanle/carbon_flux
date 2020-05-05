@@ -27,6 +27,9 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 import xbpch
 
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from matplotlib import colors
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
@@ -124,7 +127,7 @@ def find_month(fluxes, start, end):
 
 def find_month_idxs(
     fluxes,
-    month_list=['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep']
+    month_list
 ):
     """
     For some sequence of months, find the indices in the flux xarray
@@ -159,7 +162,8 @@ def cost_func(input_sfs, true_flux_vecs, prior_flux_vecs):
     This cost function is for evaluating a single month
 
     Parameters:
-        input_sfs       (numpy arr): (lon x lat) x 1 (i.e. [(72 x 46) = 3312] x 1)
+        input_sfs       (numpy arr): (lon x lat) x 1
+                                     (i.e. [(72 x 46) = 3312] x 1)
         true_flux_vecs  (numpy arr): time x (lon x lat) (i.e. ~248 x 3312)
         prior_flux_vecs (numpy arr): time x (lon x lat) (i.e. ~248 x 3312)
 
@@ -190,7 +194,38 @@ def plot_cost_evals(cost_evals, month_nm, save_loc):
     plt.savefig(save_loc)
 
 
+def plot_month_sfs(sf_arr, lon, lat, write_loc):
+    """
+    Plot a global heatmap of scale factors for a single month
+
+    Parameters:
+        sf_arr    (np arr) : {lon} x {lat} array
+        lon       (np arr) :
+        lat       (np arr) :
+        write_loc (str)    : file path to which plot should be written
+
+    Returns:
+        None - but write plot to file
+    """
+    assert sf_arr.shape[0] == 72
+    assert sf_arr.shape[1] == 46
+
+    fig = plt.figure(figsize=(12.5, 6))
+    norm = colors.DivergingNorm(vcenter=1)
+
+    ax = fig.add_subplot(111, projection=ccrs.PlateCarree(), aspect='auto')
+    contour = ax.contourf(
+        lon, lat, sf_arr.T, levels=100,
+        transform=ccrs.PlateCarree(), cmap='bwr', norm=norm
+    )
+    fig.colorbar(contour, ax=ax, orientation='vertical', extend='both')
+    ax.add_feature(cfeature.COASTLINE)
+
+    plt.savefig(write_loc)
+
+
 def find_month_opt_sfs(
+    month,
     month_idx,
     true_fluxes,
     prior_fluxes,
@@ -206,6 +241,8 @@ def find_month_opt_sfs(
     For a given month of raw data, we find the optimal scale factors..
 
     Parameters:
+        month         (str)    : name of month being optimized - used
+                                 for updating the cost_evals list
         month_idx     (np arr) : time indices for month of interest
         true_fluxes   (xarray) :
         prior_fluxes  (xarray) :
@@ -246,7 +283,7 @@ def find_month_opt_sfs(
     # function to capture the converge information for the optimization
     def save_cost_func(xk):
         global cost_evals
-        cost_evals.append(obj_func(
+        cost_evals[month].append(obj_func(
             input_sfs=xk,
             true_flux_vecs=true_month_land_vec,
             prior_flux_vecs=prior_month_land_vec
@@ -293,13 +330,16 @@ def run(
     prior_f_dir,
     true_prefix,
     prior_prefix,
+    month_list,
     tracer_path,
     diag_path,
     flux_variable,
     land_idx_fp,
     opt_method,
     constrain,
-    opt_sf_save
+    opt_sf_save,
+    lon_loc,
+    lat_loc
 ):
     """
     Run the full optimal flux code
@@ -309,6 +349,7 @@ def run(
         prior_f_dir   (str)  :
         true_prefix   (str)  :
         prior_prefix  (str)  :
+        month_list    (list) : list of months over which to optimize
         tracer_path   (str)  : path to tracerinfo file
         diag_path     (str)  : path to diaginfo file
         flux_variable (str)  : xarray variable name of interest
@@ -316,11 +357,17 @@ def run(
         opt_method    (str)  : optimization method to use
         constrain     (bool) : flag to use lower bounded optimization
         opt_sf_save   (str)  : save dir of scale factors
+        lon_loc       (str)  : file location of longitude numpy array
+        lat_loc       (str)  : file location of latitude numpy array
 
     Returns:
         None - writes optimal scale factor array to file and saves a plot of
         convergence cost function
     """
+    # read in the lat/lon arrs
+    lon = np.load(lon_loc)
+    lat = np.load(lat_loc)
+
     # read in true and prior fluxes
     true_fluxes = read_dir_fluxes(
         flux_dir=true_f_dir,
@@ -339,7 +386,10 @@ def run(
     print('Prior Fluxes acquired')
 
     # find month indices
-    month_idxs = find_month_idxs(fluxes=true_fluxes)
+    month_idxs = find_month_idxs(
+        fluxes=true_fluxes,
+        month_list=month_list
+    )
     print('Month indices determined')
 
     # determine some dimension constants
@@ -353,13 +403,14 @@ def run(
     # run the optimization
     optimal_sf_arrs = []
     optimize_output = {}
-    cost_storage = []
 
+    print('Starting optimization')
+    count = 0
     for month in tqdm(month_idxs.keys()):
 
         # find optimal scale factors for the month
-        cost_evals = []
         pt_sf_month_full, opt_sf_month = find_month_opt_sfs(
+            month=month,
             month_idx=month_idxs[month],
             true_fluxes=true_fluxes,
             prior_fluxes=prior_fluxes,
@@ -375,13 +426,35 @@ def run(
         # save data
         optimal_sf_arrs.append(pt_sf_month_full)
         optimize_output[month] = opt_sf_month
-        cost_storage.append(cost_evals)
 
         # make plot of convergence
         plot_cost_evals(
             cost_evals=cost_evals,
             month_nm=month,
-            save_loc=opt_sf_save + '/%s_2010_CT_JULES.png' % month
+            save_loc=opt_sf_save + '/%s_%s_convergence.png' % (
+                str(count).zfill(2), month
+            )
+        )
+        count += 1
+
+    # save the scale factors
+    opt_sf = np.stack(optimal_sf_arrs)
+    np.save(
+        file=opt_sf_save + '/%s_%s_opt_sfs.npy' % (
+            month_list[0], month_list[-1]
+        ),
+        arr=opt_sf
+    )
+
+    # create plots for each month
+    for idx, month in tqdm(enumerate(month_idxs.keys())):
+        plot_month_sfs(
+            sf_arr=opt_sf[idx, :, :],
+            lon=lon,
+            lat=lat,
+            write_loc=opt_sf_save + '/%s_%s_sf_plot.png' % (
+                str(idx).zfill(2), month
+            )
         )
 
 
@@ -393,18 +466,25 @@ if __name__ == '__main__':
     DIAGINFO_PATH = BASE_DIR + '/data/JULES/diaginfo.dat'
 
     TRUE_F_LOC = BASE_DIR + '/data/JULES'
-    PRIOR_F_LOC = BASE_DIR + '/NEE_fluxes'
+    PRIOR_F_LOC = BASE_DIR + '/data/NEE_fluxes'
     PREFIX_TRUE = 'nep.geos.4x5.2010.'
     PREFIX_PRIOR = 'nep.geos.4x5.'
     FLUX_VARIABLE = 'CO2_SRCE_CO2bf'
     LAND_IDX_FP = BASE_DIR + '/data/ocean_masks/JULES_jan_mask.npy'
+
+    # default list of months
+    MONTH_LST = ['jan', 'feb']  # , 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep']
+
+    # lon/lat arr locations for plotting
+    LON_LOC = BASE_DIR + '/data/lon_lat_arrs/lon.npy'
+    LAT_LOC = BASE_DIR + '/data/lon_lat_arrs/lat.npy'
 
     # optimization defaults
     POS_CONSTRAIN = False
     OPT_METHOD = 'L-BFGS-B'
 
     OPT_SF_SAVE_LOC = BASE_DIR + \
-        '/data/optimal_scale_factors/2010_JULES_true_CT_prior/jan_sept.npy'
+        '/data/optimal_scale_factors/2010_JULES_true_CT_prior_no_constrain'
 
     # initialize the argparser
     parser = argparse.ArgumentParser()
@@ -438,15 +518,23 @@ if __name__ == '__main__':
     # parse the given arguments
     args = parser.parse_args()
 
+    # define a place for the cost function evaluations to go
+    cost_evals = {month: [] for month in MONTH_LST}
+
     # run the optimization
     run(
         true_f_dir=args.true_f_dir,
         prior_f_dir=args.prior_f_dir,
         true_prefix=args.prefix_true,
         prior_prefix=args.prefix_prior,
+        month_list=MONTH_LST,
         tracer_path=args.tracer_path,
         diag_path=args.diag_path,
         flux_variable=args.flux_variable,
         land_idx_fp=args.land_idx_fp,
-        opt_method=args.opt_method
+        opt_method=args.opt_method,
+        constrain=args.pos_constrain,
+        opt_sf_save=args.save_loc,
+        lon_loc=LON_LOC,
+        lat_loc=LAT_LOC
     )
