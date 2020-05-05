@@ -178,12 +178,22 @@ def cost_func(input_sfs, true_flux_vecs, prior_flux_vecs):
     )
 
 
-def plot_cost_evals(cost_evals, month_nm, save_loc):
+def plot_cost_evals(cost_vals, month_nm, save_loc):
     """
     Plot the cost function evalutions to given save locations
+
+    Parameters:
+        cost_vals (list) : numeric values of cost function evaluated at each
+                           iteration
+        month_nm  (str)  : name of month being optimized
+        save_loc  (str)  : file path for generated image
+
+    Returns:
+        None - writes plot to save_loc
+
     """
     plt.figure(figsize=(12.5, 6))
-    plt.plot(cost_evals)
+    plt.plot(cost_vals)
 
     # labels
     plt.xlabel('Iteration')
@@ -364,6 +374,8 @@ def run(
         None - writes optimal scale factor array to file and saves a plot of
         convergence cost function
     """
+    global cost_evals
+
     # read in the lat/lon arrs
     lon = np.load(lon_loc)
     lat = np.load(lat_loc)
@@ -429,7 +441,7 @@ def run(
 
         # make plot of convergence
         plot_cost_evals(
-            cost_evals=cost_evals,
+            cost_vals=cost_evals[month],
             month_nm=month,
             save_loc=opt_sf_save + '/%s_%s_convergence.png' % (
                 str(count).zfill(2), month
@@ -473,7 +485,7 @@ if __name__ == '__main__':
     LAND_IDX_FP = BASE_DIR + '/data/ocean_masks/JULES_jan_mask.npy'
 
     # default list of months
-    MONTH_LST = ['jan', 'feb']  # , 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep']
+    MONTH_LST = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep']
 
     # lon/lat arr locations for plotting
     LON_LOC = BASE_DIR + '/data/lon_lat_arrs/lon.npy'
