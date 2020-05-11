@@ -8,7 +8,7 @@ Last Modified : April 3, 2020
 
 ===============================================================================
 Assumptions:
-1. the XCO2 uncertainty found in the GOSAT files is a variance term
+1. the XCO2 uncertainty found in the GOSAT files is a standard deviation term
 
 """
 

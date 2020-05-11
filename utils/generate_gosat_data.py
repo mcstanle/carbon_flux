@@ -444,7 +444,7 @@ if __name__ == '__main__':
     BASE_PATH = '/Users/mikestanley/Research/Carbon_Flux'
     BASE_FILE_D = BASE_PATH + '/data/modeled_satellite_obs/JULES_unpert'
     DATE_LB = '20100101'
-    DATE_UB = '20100901'
+    DATE_UB = '20110101'
     MODELED_XCO2 = BASE_PATH + '/data/forward_model_output/satellite_obs/\
 gosat_JULES_201001_201009/gctm.obs.01'
     OUTPUT_DIR = BASE_PATH + '/data/modeled_satellite_obs/JULES_tutorial'
