@@ -181,7 +181,7 @@ def cost_func(
     Parameters:
         input_sfs    (numpy arr) : (lon x lat) x 1
                                    (i.e. [(72 x 46) = 3312] x 1)
-        true_month  (numpy arr) : time x (lon x lat) (i.e. ~248 x 72 x 46)
+        true_month   (numpy arr) : time x (lon x lat) (i.e. ~248 x 72 x 46)
         prior_month  (numpy arr) : time x (lon x lat) (i.e. ~248 x 72 x 46)
         land_idx     (numpy arr) : indices of land grid cells
         ocean_idx    (numpy arr) : indices of ocean grid cells
@@ -265,31 +265,36 @@ def find_month_opt_sfs(
     prior_full = prior_fluxes[flux_variable].values
 
     # extract latitude and longitude from the above
-    lon = true_full['lon'].values
-    lat = true_full['lat'].values
+    lon = true_fluxes['lon'].values
+    lat = prior_fluxes['lat'].values
 
     # create monthly data
     true_month = true_full[month_idx, :, :]
     prior_month = prior_full[month_idx, :, :]
 
-    # find the number of time steps in the month
-    month_ts = true_month.shape[0]
+    # # find the number of time steps in the month
+    # month_ts = true_month.shape[0]
 
-    # create versions of the month fluxes for just land
-    true_month_land_vec = true_month.reshape(
-        (month_ts, space_dim)
-    ).copy()[:, land_mask]
-    prior_month_land_vec = prior_month.reshape(
-        (month_ts, space_dim)
-    ).copy()[:, land_mask]
+    # # create versions of the month fluxes for just land
+    # true_month_land_vec = true_month.reshape(
+    #     (month_ts, space_dim)
+    # ).copy()[:, land_mask]
+    # prior_month_land_vec = prior_month.reshape(
+    #     (month_ts, space_dim)
+    # ).copy()[:, land_mask]
 
     # function to capture the converge information for the optimization
     def save_cost_func(xk):
         global cost_evals
         cost_evals[month].append(obj_func(
             input_sfs=xk,
-            true_flux_vecs=true_month_land_vec,
-            prior_flux_vecs=prior_month_land_vec
+            true_month=true_month,
+            prior_month=prior_month,
+            land_idx=land_mask,
+            ocean_idx=ocean_mask,
+            space_dim=space_dim,
+            lon=lon,
+            lat=lat
         ))
 
     # find the length of the land vector
@@ -317,7 +322,7 @@ def find_month_opt_sfs(
             space_dim, lon, lat
         ),
         bounds=opt_bounds if constrain else None,
-        options={'maxfun': max_fun},
+        options={'maxfun': max_fun} if opt_meth == "L-BFGS-B" else None,
         method=opt_meth,
         callback=save_cost_func
     )
