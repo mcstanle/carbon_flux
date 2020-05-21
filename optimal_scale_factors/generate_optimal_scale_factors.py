@@ -16,7 +16,7 @@ Outputs:
 
 Author        : Mike Stanley
 Created       : May 4, 2020
-Last Modified : May 4, 2020
+Last Modified : May 21, 2020
 """
 
 import argparse
@@ -26,6 +26,9 @@ from tqdm import tqdm
 import numpy as np
 from scipy.optimize import minimize, Bounds
 import xbpch
+
+import carbonfluxtools.computation as ccomp
+import carbonfluxtools.io as cio
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -52,34 +55,6 @@ def get_flux_file_paths(base_dir, prefix):
     file_p_base = base_dir + '/' + prefix + '*'
 
     return sorted([file_nm for file_nm in glob(file_p_base)])
-
-
-def read_dir_fluxes(flux_dir, flux_prefix, tracer_path, diag_path):
-    """
-    Read in a directory of bpch flux files
-
-    Parameters:
-        flux_dir    (str) : directory containing flux files
-        flux_prefix (str) : prefix of fluxes of interest
-        tracer_path (str) : path to tracerinfo file
-        diag_path   (str) : path to diaginfo file
-
-    Returns:
-        xarray object containing the fluxes
-    """
-    # get flux file paths
-    flux_paths = get_flux_file_paths(base_dir=flux_dir, prefix=flux_prefix)
-    assert len(flux_paths) > 0
-
-    # read in the flux files
-    fluxes = xbpch.open_mfbpchdataset(
-        flux_paths,
-        dask=True,
-        tracerinfo_file=tracer_path,
-        diaginfo_file=diag_path
-    )
-
-    return fluxes
 
 
 def find_month(fluxes, start, end):
@@ -123,59 +98,6 @@ def find_month(fluxes, start, end):
     time_idxs = np.intersect1d(geq, less)
 
     return time_idxs
-
-
-def find_month_idxs(
-    fluxes,
-    month_list
-):
-    """
-    For some sequence of months, find the indices in the flux xarray
-    corresponding to that month.
-
-    Parameters:
-        fluxes     (xarray) : output from read_dir_fluxes
-        month_list (list)   :
-    """
-    # find the month indices
-    month_idxs = {month: None for month in month_list}
-
-    for month_idx, month in enumerate(month_idxs.keys()):
-        # find the start and end values
-        start_val = month_idx + 1
-        end_val = month_idx + 2
-
-        # find the time indices
-        month_idxs[month] = find_month(
-            fluxes=fluxes,
-            start=start_val,
-            end=end_val
-        )
-
-    return month_idxs
-
-
-def cost_func(input_sfs, true_flux_vecs, prior_flux_vecs):
-    """
-    Evaluate the cost function for scale factors and fluxes
-
-    This cost function is for evaluating a single month
-
-    Parameters:
-        input_sfs       (numpy arr): (lon x lat) x 1
-                                     (i.e. [(72 x 46) = 3312] x 1)
-        true_flux_vecs  (numpy arr): time x (lon x lat) (i.e. ~248 x 3312)
-        prior_flux_vecs (numpy arr): time x (lon x lat) (i.e. ~248 x 3312)
-
-    Returns:
-        Real value of cost
-    """
-    # reshape the input_sfs vector
-    input_sfs_rs = input_sfs.reshape((input_sfs.shape[0], 1))
-
-    return np.sum(
-        np.square((true_flux_vecs.T - input_sfs_rs * prior_flux_vecs.T))
-    )
 
 
 def plot_cost_evals(cost_vals, month_nm, save_loc):
@@ -234,6 +156,67 @@ def plot_month_sfs(sf_arr, lon, lat, write_loc):
     plt.savefig(write_loc)
 
 
+def cost_func(
+    input_sfs,
+    true_month,
+    prior_month,
+    land_idx,
+    ocean_idx,
+    space_dim,
+    lon,
+    lat
+):
+    """
+    Evaluate the cost function for scale factors and fluxes
+
+    The evaluation criterion is essentiall root mean squared error of between
+    posterior flux and true flux
+
+    This cost function is for evaluating a single month
+
+    Note, this function is designed to receive scale factors that have been
+    removed of their ocean components. These need to be added in to take
+    advantage of the weighted area RMSE function
+
+    Parameters:
+        input_sfs    (numpy arr) : (lon x lat) x 1
+                                   (i.e. [(72 x 46) = 3312] x 1)
+        true_month  (numpy arr) : time x (lon x lat) (i.e. ~248 x 72 x 46)
+        prior_month  (numpy arr) : time x (lon x lat) (i.e. ~248 x 72 x 46)
+        land_idx     (numpy arr) : indices of land grid cells
+        ocean_idx    (numpy arr) : indices of ocean grid cells
+        space_dim    (int)       : number of global grid cells
+        lon          (numpy arr) : longitude array
+        lat          (numpy arr) : latitude array
+
+    Returns:
+        Real value of cost
+    """
+    # insert ocean values back in - (3312,)
+    opt_sf_month_full = np.ones(space_dim)
+    opt_sf_month_full[land_idx] = input_sfs
+
+    # reshape to (72, 46)
+    opt_sf_month_full = opt_sf_month_full.reshape((72, 46))
+
+    # find the mean for each grid cell
+    true_flux_avg = true_month.mean(axis=0)
+    prior_flux_avg = prior_month.mean(axis=0)
+
+    # create gridwise square error array - (72, 46)
+    gw_sq_err = np.square(true_flux_avg - prior_flux_avg * opt_sf_month_full)
+
+    # find the weighted average square error
+    w_err = ccomp.w_avg_flux_month(
+        flux_arr=gw_sq_err,
+        ocean_idxs=ocean_idx,
+        lon=lon,
+        lat=lat
+    )
+
+    return np.sqrt(w_err)
+
+
 def find_month_opt_sfs(
     month,
     month_idx,
@@ -242,6 +225,7 @@ def find_month_opt_sfs(
     flux_variable,
     obj_func,
     land_mask,
+    ocean_mask,
     space_dim,
     constrain,
     opt_meth,
@@ -263,6 +247,7 @@ def find_month_opt_sfs(
                                  scale factors
         land_mask     (np arr) : simply numpy arr that given flatten spatial
                                  indices of land areas on the grid
+        ocean_mask    (np arr) : provides indices of ocean grid cells
         space_dim     (int)    : latitude times longitude dimension for
                                  flattened arrays
         constrain     (bool)   : lower bound flag
@@ -275,14 +260,22 @@ def find_month_opt_sfs(
             1. the numpy array of optimal scale factors
             2. the scipy.optim.minimize object which contains diagnostic info
     """
+    # extract full data
+    true_full = true_fluxes[flux_variable].values
+    prior_full = prior_fluxes[flux_variable].values
+
+    # extract latitude and longitude from the above
+    lon = true_full['lon'].values
+    lat = true_full['lat'].values
+
     # create monthly data
-    true_month = true_fluxes[flux_variable].values[month_idx, :, :]
-    prior_month = prior_fluxes[flux_variable].values[month_idx, :, :]
+    true_month = true_full[month_idx, :, :]
+    prior_month = prior_full[month_idx, :, :]
 
     # find the number of time steps in the month
     month_ts = true_month.shape[0]
 
-    # create versions of the january fluxes for just land
+    # create versions of the month fluxes for just land
     true_month_land_vec = true_month.reshape(
         (month_ts, space_dim)
     ).copy()[:, land_mask]
@@ -304,22 +297,26 @@ def find_month_opt_sfs(
 
     # lower bounds
     if constrain:
+
+        # lower bound
         lb = np.zeros(land_vec_len)
-    else:
-        lb = np.array([-np.inf] * land_vec_len)
 
-    # upper bounds -- infinite
-    ub = np.array([np.inf] * land_vec_len)
+        # upper bounds -- infinite
+        ub = np.array([np.inf] * land_vec_len)
 
-    # create bounds object
-    opt_bounds = Bounds(lb, ub)
+        # create bounds object
+        opt_bounds = Bounds(lb, ub)
 
     # optimize
     opt_sf_month = minimize(
         fun=obj_func,
         x0=np.ones((land_vec_len, 1)),
-        args=(true_month_land_vec, prior_month_land_vec),
-        bounds=opt_bounds,
+        args=(
+            true_month, prior_month,
+            land_mask, ocean_mask,
+            space_dim, lon, lat
+        ),
+        bounds=opt_bounds if constrain else None,
         options={'maxfun': max_fun},
         method=opt_meth,
         callback=save_cost_func
@@ -381,24 +378,24 @@ def run(
     lat = np.load(lat_loc)
 
     # read in true and prior fluxes
-    true_fluxes = read_dir_fluxes(
-        flux_dir=true_f_dir,
-        flux_prefix=true_prefix,
-        tracer_path=tracer_path,
-        diag_path=diag_path
+    true_fluxes = cio.read_flux_files(
+        file_dir=true_f_dir,
+        file_pre=true_prefix,
+        tracer_fp=tracer_path,
+        diag_fp=diag_path
     )
     print('True Fluxes acquired')
 
-    prior_fluxes = read_dir_fluxes(
-        flux_dir=prior_f_dir,
-        flux_prefix=prior_prefix,
-        tracer_path=tracer_path,
-        diag_path=diag_path
+    prior_fluxes = cio.read_flux_files(
+        file_dir=prior_f_dir,
+        file_pre=prior_prefix,
+        tracer_fp=tracer_path,
+        diag_fp=diag_path
     )
     print('Prior Fluxes acquired')
 
     # find month indices
-    month_idxs = find_month_idxs(
+    month_idxs = cio.find_month_idxs(
         fluxes=true_fluxes,
         month_list=month_list
     )
@@ -429,6 +426,7 @@ def run(
             flux_variable=flux_variable,
             obj_func=cost_func,
             land_mask=land_idx,
+            ocean_mask=ocean_mask,
             space_dim=SPACE_DIM,
             constrain=constrain,
             opt_meth=opt_method,
@@ -493,7 +491,10 @@ if __name__ == '__main__':
 
     # optimization defaults
     POS_CONSTRAIN = False
-    OPT_METHOD = 'L-BFGS-B'
+    if POS_CONSTRAIN:
+        OPT_METHOD = 'L-BFGS-B'
+    else:
+        OPT_METHOD = 'Nelder-Mead'
 
     OPT_SF_SAVE_LOC = BASE_DIR + \
         '/data/optimal_scale_factors/2010_JULES_true_CT_prior_no_constrain'
