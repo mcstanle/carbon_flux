@@ -19,6 +19,7 @@ Created       : May 4, 2020
 Last Modified : May 21, 2020
 """
 
+from area import area
 import argparse
 from glob import glob
 from tqdm import tqdm
@@ -126,7 +127,7 @@ def plot_cost_evals(cost_vals, month_nm, save_loc):
     plt.savefig(save_loc)
 
 
-def plot_month_sfs(sf_arr, lon, lat, write_loc):
+def plot_month_sfs(sf_arr, lon, lat, write_loc=None):
     """
     Plot a global heatmap of scale factors for a single month
 
@@ -217,15 +218,77 @@ def cost_func(
     return np.sqrt(w_err)
 
 
+def compute_land_weights(ocean_mask, lon, lat):
+    """
+    Given a sequence of indices that indicate where ocean grid cells are,
+    computes an array of weights to be used in the cost function for the
+    optimization.
+
+    Parameters:
+        ocean_mask (np arr) : sequence of flattened indices (from 72x46)
+        lon        (np arr) : longitude vector
+        lat        (np arr) : latitude vector
+
+    Returns:
+        np arr of weights, should sum to 1
+    """
+    ref_arr = np.arange(46*72).reshape((72, 46))
+    land_areas = []
+
+    for lat_idx in np.arange(len(lat)):
+        for lon_idx in np.arange(len(lon)):
+            if ref_arr[lon_idx, lat_idx] in ocean_mask:
+                continue
+
+            # get the lower right corner endpoints of the box
+            lon_lrc = lon[lon_idx] - 2.5
+            lat_lrc = lat[lat_idx] - 2
+
+            # find area
+            land_areas.append(area(ccomp.subgrid_rect_obj(lon_lrc, lat_lrc)))
+
+    # make the above into a numpy array
+    land_a_arr = np.array(land_areas)
+
+    # find the weights based upon these values
+    land_weights = land_a_arr / land_a_arr.sum()
+
+    assert land_weights.sum() == 1.
+
+    return land_weights
+
+
+def cost_lite(sfs, prior, truth, weigh):
+    """
+    Essentially the same function as above, but off-loading work within the
+    above function to other parts of the code.
+
+    Parameters:
+        sfs   (np arr) : proposed scale factors (L,) where L is len of land arr
+        prior (np arr) : flattened prior mean monthly flux, only land
+        truth (np arr) : flattened true mean monthly flux, only land
+        weigh (np arr) : weight vector giving weights by land area
+
+    Returns:
+        float - RMSE with the land area weights
+    """
+    # find the squared errors
+    sq_err = np.square(truth - prior * sfs)
+
+    return np.sqrt(np.dot(sq_err, weigh))
+
+
 def find_month_opt_sfs(
     month,
     month_idx,
-    true_fluxes,
-    prior_fluxes,
-    flux_variable,
+    true_flux_arr,
+    prior_flux_arr,
+    lon,
+    lat,
     obj_func,
     land_mask,
     ocean_mask,
+    land_weights,
     space_dim,
     constrain,
     opt_meth,
@@ -235,70 +298,53 @@ def find_month_opt_sfs(
     For a given month of raw data, we find the optimal scale factors..
 
     Parameters:
-        month         (str)    : name of month being optimized - used
-                                 for updating the cost_evals list
-        month_idx     (np arr) : time indices for month of interest
-        true_fluxes   (xarray) :
-        prior_fluxes  (xarray) :
-        flux_variable (str)    :
-        month_idxs    (dict)   : indices in the above arrays associated with
-                                 each month
-        obj_func      (func)   : objective function used to learn optimal
-                                 scale factors
-        land_mask     (np arr) : simply numpy arr that given flatten spatial
-                                 indices of land areas on the grid
-        ocean_mask    (np arr) : provides indices of ocean grid cells
-        space_dim     (int)    : latitude times longitude dimension for
-                                 flattened arrays
-        constrain     (bool)   : lower bound flag
-        opt_meth      (str)    : optimization method to use with
-                                 scipy.optim.minimize
-        max_fun       (int)    : maximum number of function calls
+        month          (str)    : name of month being optimized - used
+                                  for updating the cost_evals list
+        month_idx      (np arr) : time indices for month of interest
+        true_flux_arr  (np arr) : (T x 72 x 46)
+        prior_flux_arr (xarray) : (T x 72 x 46)
+        lon            (np arr) : longitude array
+        lat            (np arr) : latitude array
+        month_idxs     (dict)   : indices in the above arrays associated with
+                                  each month
+        obj_func       (func)   : objective function used to learn optimal
+                                  scale factors
+        land_weights   (np arr) : weights for weighted cost function
+        land_mask      (np arr) : simply numpy arr that given flatten spatial
+                                  indices of land areas on the grid
+        ocean_mask     (np arr) : provides indices of ocean grid cells
+        space_dim      (int)    : latitude times longitude dimension for
+                                  flattened arrays
+        constrain      (bool)   : lower bound flag
+        opt_meth       (str)    : optimization method to use with
+                                  scipy.optim.minimize
+        max_fun        (int)    : maximum number of function calls
 
     Returns:
         a tuple with
             1. the numpy array of optimal scale factors
             2. the scipy.optim.minimize object which contains diagnostic info
     """
-    # extract full data
-    true_full = true_fluxes[flux_variable].values
-    prior_full = prior_fluxes[flux_variable].values
-
-    # extract latitude and longitude from the above
-    lon = true_fluxes['lon'].values
-    lat = prior_fluxes['lat'].values
-
     # create monthly data
-    true_month = true_full[month_idx, :, :]
-    prior_month = prior_full[month_idx, :, :]
+    true_month = true_flux_arr[month_idx, :, :]
+    prior_month = prior_flux_arr[month_idx, :, :]
 
-    # # find the number of time steps in the month
-    # month_ts = true_month.shape[0]
+    # find the length of the land vector
+    land_vec_len = len(land_mask)
 
-    # # create versions of the month fluxes for just land
-    # true_month_land_vec = true_month.reshape(
-    #     (month_ts, space_dim)
-    # ).copy()[:, land_mask]
-    # prior_month_land_vec = prior_month.reshape(
-    #     (month_ts, space_dim)
-    # ).copy()[:, land_mask]
+    # find the flattened land only truth and prior
+    prior_flat_land = prior_month.mean(axis=0).flatten()[land_mask]
+    truth_flat_land = true_month.mean(axis=0).flatten()[land_mask]
 
     # function to capture the converge information for the optimization
     def save_cost_func(xk):
         global cost_evals
         cost_evals[month].append(obj_func(
-            input_sfs=xk,
-            true_month=true_month,
-            prior_month=prior_month,
-            land_idx=land_mask,
-            ocean_idx=ocean_mask,
-            space_dim=space_dim,
-            lon=lon,
-            lat=lat
+            sfs=xk,
+            truth=truth_flat_land,
+            prior=prior_flat_land,
+            weigh=land_weights
         ))
-
-    # find the length of the land vector
-    land_vec_len = len(land_mask)
 
     # lower bounds
     if constrain:
@@ -312,17 +358,23 @@ def find_month_opt_sfs(
         # create bounds object
         opt_bounds = Bounds(lb, ub)
 
+    # create some options
+    if opt_meth == 'L-BFGS-B':
+        options = {'maxfun': max_fun}
+    elif opt_meth == 'BFGS':
+        options = {'maxiter': 100}
+
     # optimize
     opt_sf_month = minimize(
         fun=obj_func,
-        x0=np.ones((land_vec_len, 1)),
+        x0=np.ones(land_vec_len),
         args=(
-            true_month, prior_month,
-            land_mask, ocean_mask,
-            space_dim, lon, lat
+            prior_flat_land,
+            truth_flat_land,
+            land_weights
         ),
         bounds=opt_bounds if constrain else None,
-        options={'maxfun': max_fun} if opt_meth == "L-BFGS-B" else None,
+        options=options,
         method=opt_meth,
         callback=save_cost_func
     )
@@ -399,6 +451,10 @@ def run(
     )
     print('Prior Fluxes acquired')
 
+    # extract numpy arrays from the above
+    true_full = true_fluxes[flux_variable].values
+    prior_full = prior_fluxes[flux_variable].values
+
     # find month indices
     month_idxs = cio.find_month_idxs(
         fluxes=true_fluxes,
@@ -414,6 +470,11 @@ def run(
     ocean_mask = np.load(land_idx_fp)
     land_idx = np.setdiff1d(np.arange(0, SPACE_DIM), ocean_mask)
 
+    # compute land weights
+    land_weights = compute_land_weights(
+        ocean_mask=ocean_mask, lon=lon, lat=lat
+    )
+
     # run the optimization
     optimal_sf_arrs = []
     optimize_output = {}
@@ -426,12 +487,14 @@ def run(
         pt_sf_month_full, opt_sf_month = find_month_opt_sfs(
             month=month,
             month_idx=month_idxs[month],
-            true_fluxes=true_fluxes,
-            prior_fluxes=prior_fluxes,
-            flux_variable=flux_variable,
-            obj_func=cost_func,
+            true_flux_arr=true_full,
+            prior_flux_arr=prior_full,
+            lon=lon,
+            lat=lat,
+            obj_func=cost_lite,
             land_mask=land_idx,
             ocean_mask=ocean_mask,
+            land_weights=land_weights,
             space_dim=SPACE_DIM,
             constrain=constrain,
             opt_meth=opt_method,
@@ -499,7 +562,7 @@ if __name__ == '__main__':
     if POS_CONSTRAIN:
         OPT_METHOD = 'L-BFGS-B'
     else:
-        OPT_METHOD = 'Nelder-Mead'
+        OPT_METHOD = 'BFGS'
 
     OPT_SF_SAVE_LOC = BASE_DIR + \
         '/data/optimal_scale_factors/2010_JULES_true_CT_prior_no_constrain'
