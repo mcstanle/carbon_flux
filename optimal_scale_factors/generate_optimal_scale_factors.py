@@ -481,6 +481,7 @@ def run(
 
     print('Starting optimization')
     count = 0
+    print(month_idxs.keys())
     for month in tqdm(month_idxs.keys()):
 
         # find optimal scale factors for the month
@@ -558,14 +559,14 @@ if __name__ == '__main__':
     LAT_LOC = BASE_DIR + '/data/lon_lat_arrs/lat.npy'
 
     # optimization defaults
-    POS_CONSTRAIN = False
+    POS_CONSTRAIN = True
     if POS_CONSTRAIN:
         OPT_METHOD = 'L-BFGS-B'
     else:
         OPT_METHOD = 'BFGS'
 
     OPT_SF_SAVE_LOC = BASE_DIR + \
-        '/data/optimal_scale_factors/2010_JULES_true_CT_prior_no_constrain'
+        '/data/optimal_scale_factors/2010_JULES_true_CT_prior'
 
     # initialize the argparser
     parser = argparse.ArgumentParser()
