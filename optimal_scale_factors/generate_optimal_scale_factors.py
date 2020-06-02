@@ -263,6 +263,8 @@ def cost_lite(sfs, prior, truth, weigh):
     Essentially the same function as above, but off-loading work within the
     above function to other parts of the code.
 
+    THIS FUNCTION AVERAGES OVER MONTH BEFORE FINDING ERROR
+
     Parameters:
         sfs   (np arr) : proposed scale factors (L,) where L is len of land arr
         prior (np arr) : flattened prior mean monthly flux, only land
@@ -276,6 +278,32 @@ def cost_lite(sfs, prior, truth, weigh):
     sq_err = np.square(truth - prior * sfs)
 
     return np.sqrt(np.dot(sq_err, weigh))
+
+
+def cost_lite_pre_avg(sfs, prior, truth, weigh):
+    """
+    Essentially the same function as above, but off-loading work within the
+    above function to other parts of the code.
+
+    THIS FUNCTION FINDS ERROR BEFORE AVERAGING OVER TIME (unlike cost_lite)
+
+    prior * sfs is a (T x {land elems}) X (land elems) operation and then we
+    average over time, which is axis 0. Then we take a weighted average by area
+    size and return the square root of this value.
+
+    Parameters:
+        sfs      (np arr) : proposed scale factors for land grid cells (72*46)
+        prior    (np arr) : full prior mean monthly flux (Tx(72*46))
+        truth    (np arr) : full true mean monthly flux (Tx(72*46))
+        weigh    (np arr) : weight vector giving weights by land area
+
+    Returns:
+        float - RMSE with the land area weights
+    """
+    # find MSE for each grid cell over time --> 72x46
+    mse = np.mean(np.square(truth - prior * sfs), axis=0)
+
+    return np.sqrt(np.dot(mse.flatten(), weigh))
 
 
 def find_month_opt_sfs(
@@ -324,25 +352,35 @@ def find_month_opt_sfs(
         a tuple with
             1. the numpy array of optimal scale factors
             2. the scipy.optim.minimize object which contains diagnostic info
+
+    NOTE:
+    - depending on the obj_func being used, arguments need to be modified
     """
-    # create monthly data
+    # create monthly data Tx72x46
     true_month = true_flux_arr[month_idx, :, :]
     prior_month = prior_flux_arr[month_idx, :, :]
 
-    # find the length of the land vector
+    # find the length of the land vector - 72*46 = 3312
     land_vec_len = len(land_mask)
 
+    # find the number of time elements in this month
+    time_len = len(month_idx)
+
+    # reshape the above to be {num time steps} x {number of land grid spots}
+    true_month_flat = true_month.reshape(time_len, 72*46)[:, land_mask]
+    prior_month_flat = prior_month.reshape(time_len, 72*46)[:, land_mask]
+
     # find the flattened land only truth and prior
-    prior_flat_land = prior_month.mean(axis=0).flatten()[land_mask]
-    truth_flat_land = true_month.mean(axis=0).flatten()[land_mask]
+    # prior_flat_land = prior_month.mean(axis=0).flatten()[land_mask]
+    # truth_flat_land = true_month.mean(axis=0).flatten()[land_mask]
 
     # function to capture the converge information for the optimization
     def save_cost_func(xk):
         global cost_evals
         cost_evals[month].append(obj_func(
             sfs=xk,
-            truth=truth_flat_land,
-            prior=prior_flat_land,
+            truth=true_month_flat,
+            prior=prior_month_flat,
             weigh=land_weights
         ))
 
@@ -369,8 +407,8 @@ def find_month_opt_sfs(
         fun=obj_func,
         x0=np.ones(land_vec_len),
         args=(
-            prior_flat_land,
-            truth_flat_land,
+            prior_month_flat,
+            true_month_flat,
             land_weights
         ),
         bounds=opt_bounds if constrain else None,
@@ -492,7 +530,7 @@ def run(
             prior_flux_arr=prior_full,
             lon=lon,
             lat=lat,
-            obj_func=cost_lite,
+            obj_func=cost_lite_pre_avg,
             land_mask=land_idx,
             ocean_mask=ocean_mask,
             land_weights=land_weights,
@@ -559,14 +597,14 @@ if __name__ == '__main__':
     LAT_LOC = BASE_DIR + '/data/lon_lat_arrs/lat.npy'
 
     # optimization defaults
-    POS_CONSTRAIN = True
+    POS_CONSTRAIN = False
     if POS_CONSTRAIN:
         OPT_METHOD = 'L-BFGS-B'
     else:
         OPT_METHOD = 'BFGS'
 
     OPT_SF_SAVE_LOC = BASE_DIR + \
-        '/data/optimal_scale_factors/2010_JULES_true_CT_prior'
+        '/data/optimal_scale_factors/2010_JULES_true_CT_prior_no_constrain'
 
     # initialize the argparser
     parser = argparse.ArgumentParser()
