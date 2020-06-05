@@ -16,12 +16,13 @@ Outputs:
 
 Author        : Mike Stanley
 Created       : May 4, 2020
-Last Modified : May 21, 2020
+Last Modified : June 5, 2020
 """
 
 from area import area
 import argparse
 from glob import glob
+import pickle
 from tqdm import tqdm
 
 import numpy as np
@@ -300,10 +301,10 @@ def cost_lite_pre_avg(sfs, prior, truth, weigh):
     Returns:
         float - RMSE with the land area weights
     """
-    # find MSE for each grid cell over time --> 72x46
+    # find MSE for each grid cell over time --> 72x46 : mean --> 72*46
     mse = np.mean(np.square(truth - prior * sfs), axis=0)
 
-    return np.sqrt(np.dot(mse.flatten(), weigh))
+    return np.sqrt(np.dot(mse, weigh))
 
 
 def find_month_opt_sfs(
@@ -428,6 +429,7 @@ def find_month_opt_sfs(
 
 
 def run(
+    read_txt,
     true_f_dir,
     prior_f_dir,
     true_prefix,
@@ -441,12 +443,14 @@ def run(
     constrain,
     opt_sf_save,
     lon_loc,
-    lat_loc
+    lat_loc,
+    month_idx_fp=None
 ):
     """
     Run the full optimal flux code
 
     Parameters:
+        read_txt      (bool) : determines file IO and month indexing
         true_f_dir    (str)  :
         prior_f_dir   (str)  :
         true_prefix   (str)  :
@@ -461,6 +465,8 @@ def run(
         opt_sf_save   (str)  : save dir of scale factors
         lon_loc       (str)  : file location of longitude numpy array
         lat_loc       (str)  : file location of latitude numpy array
+        month_idx_fp  (str)  : file path to month indices -- only use when
+                               read_txt == True
 
     Returns:
         None - writes optimal scale factor array to file and saves a plot of
@@ -472,36 +478,66 @@ def run(
     lon = np.load(lon_loc)
     lat = np.load(lat_loc)
 
-    # read in true and prior fluxes
-    true_fluxes = cio.read_flux_files(
-        file_dir=true_f_dir,
-        file_pre=true_prefix,
-        tracer_fp=tracer_path,
-        diag_fp=diag_path
-    )
-    print('True Fluxes acquired')
+    if not read_txt:   # ====== FILE IO with BPCH files ======
 
-    prior_fluxes = cio.read_flux_files(
-        file_dir=prior_f_dir,
-        file_pre=prior_prefix,
-        tracer_fp=tracer_path,
-        diag_fp=diag_path
-    )
-    print('Prior Fluxes acquired')
+        # read in true and prior fluxes
+        true_fluxes = cio.read_flux_files(
+            file_dir=true_f_dir,
+            file_pre=true_prefix,
+            tracer_fp=tracer_path,
+            diag_fp=diag_path
+        )
+        print('True Fluxes acquired')
 
-    # extract numpy arrays from the above
-    true_full = true_fluxes[flux_variable].values
-    prior_full = prior_fluxes[flux_variable].values
+        prior_fluxes = cio.read_flux_files(
+            file_dir=prior_f_dir,
+            file_pre=prior_prefix,
+            tracer_fp=tracer_path,
+            diag_fp=diag_path
+        )
+        print('Prior Fluxes acquired')
 
-    # find month indices
-    month_idxs = cio.find_month_idxs(
-        fluxes=true_fluxes,
-        month_list=month_list
-    )
-    print('Month indices determined')
+        # extract numpy arrays from the above
+        true_full = true_fluxes[flux_variable].values
+        prior_full = prior_fluxes[flux_variable].values
+
+        # find month indices
+        month_idxs = cio.find_month_idxs(
+            fluxes=true_fluxes,
+            month_list=month_list
+        )
+        print('Month indices determined')
+
+    else:   # ====== FILE IO with TXT files ======
+
+        assert month_idx_fp
+
+        # obtain the files names
+        true_flux_files = sorted(
+            glob(true_f_dir + '/' + true_prefix + '[0-9][0-9][0-9]'),
+            key=lambda x: int(x[-3:])
+        )
+
+        prior_flux_files = sorted(
+            glob(prior_f_dir + '/' + prior_prefix + '[0-9][0-9][0-9]'),
+            key=lambda x: int(x[-3:])
+        )
+
+        # read in the fluxes
+        true_full = cio.read_flux_txt_files(flux_files=true_flux_files)
+        prior_full = cio.read_flux_txt_files(flux_files=prior_flux_files)
+
+        print('True flux arra shape: %s' % str(true_full.shape))
+        print('Prior flux arra shape: %s' % str(prior_full.shape))
+        assert true_full.shape[0] != 0    # very basic checks
+        assert prior_full.shape[0] != 0
+
+        # read month indices from pickle file
+        with open(month_idx_fp, 'rb') as f:
+            month_idxs = pickle.load(f)
 
     # determine some dimension constants
-    flux_dims = true_fluxes[flux_variable].shape
+    flux_dims = true_full.shape
     SPACE_DIM = flux_dims[1] * flux_dims[2]
 
     # get land indices
@@ -578,12 +614,13 @@ def run(
 if __name__ == '__main__':
 
     # default values
+    READ_TXT = True
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
     TRACERINFO_PATH = BASE_DIR + '/data/JULES/tracerinfo.dat'
     DIAGINFO_PATH = BASE_DIR + '/data/JULES/diaginfo.dat'
 
-    TRUE_F_LOC = BASE_DIR + '/data/JULES'
-    PRIOR_F_LOC = BASE_DIR + '/data/NEE_fluxes'
+    TRUE_F_LOC = BASE_DIR + '/data/JULES_YEAR_txt'
+    PRIOR_F_LOC = BASE_DIR + '/data/NEE_fluxes_txt_scl'
     PREFIX_TRUE = 'nep.geos.4x5.2010.'
     PREFIX_PRIOR = 'nep.geos.4x5.'
     FLUX_VARIABLE = 'CO2_SRCE_CO2bf'
@@ -596,6 +633,9 @@ if __name__ == '__main__':
     LON_LOC = BASE_DIR + '/data/lon_lat_arrs/lon.npy'
     LAT_LOC = BASE_DIR + '/data/lon_lat_arrs/lat.npy'
 
+    # month index path -- only relevant if READ_TXT == True
+    MONTH_IDX_FP = BASE_DIR + '/data/month_idxs/jan_sept.pkl'
+
     # optimization defaults
     POS_CONSTRAIN = False
     if POS_CONSTRAIN:
@@ -604,12 +644,14 @@ if __name__ == '__main__':
         OPT_METHOD = 'BFGS'
 
     OPT_SF_SAVE_LOC = BASE_DIR + \
-        '/data/optimal_scale_factors/2010_JULES_true_CT_prior_no_constrain'
+        '/data/optimal_scale_factors/2010_JULES_true_CT_scl_prior_nc'
 
     # initialize the argparser
     parser = argparse.ArgumentParser()
 
     # fundamental arguments
+    parser.add_argument('--read_txt',
+                        default=READ_TXT, type=bool)
     parser.add_argument('--base_dir',
                         default=BASE_DIR, type=str)
     parser.add_argument('--true_f_dir',
@@ -643,6 +685,7 @@ if __name__ == '__main__':
 
     # run the optimization
     run(
+        read_txt=args.read_txt,
         true_f_dir=args.true_f_dir,
         prior_f_dir=args.prior_f_dir,
         true_prefix=args.prefix_true,
@@ -656,5 +699,6 @@ if __name__ == '__main__':
         constrain=args.pos_constrain,
         opt_sf_save=args.save_loc,
         lon_loc=LON_LOC,
-        lat_loc=LAT_LOC
+        lat_loc=LAT_LOC,
+        month_idx_fp=MONTH_IDX_FP
     )

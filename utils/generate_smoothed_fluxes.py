@@ -57,26 +57,32 @@ def run(
         key=lambda x: int(x[-3:])
     )
 
-    # read in the fluxes
-    flux_data = xbpch.open_mfbpchdataset(
-        flux_files,
-        dask=True,
-        tracerinfo_file=tracerinfo_path,
-        diaginfo_file=diaginfo_path
-    )
-    print('Fluxes acquired')
+    # read in the fluxes -- BPCH FILES
+    # flux_data = xbpch.open_mfbpchdataset(
+    #     flux_files,
+    #     dask=True,
+    #     tracerinfo_file=tracerinfo_path,
+    #     diaginfo_file=diaginfo_path
+    # )
 
     # extract flux arrays from the xbpch objects
-    flux_arr = flux_data.variables[varname_oi].values
+    # flux_arr = flux_data.variables[varname_oi].values
+
+    # read in the fluxes -- TXT FILES
+    flux_arr = cio.read_flux_txt_files(flux_files=flux_files)
+
+    print('Fluxes acquired')
 
     # get the dimensions of the above array for reshaping
     arr_dims = flux_arr.shape
 
     # reshape the above array to prepare for dataframe
-    flux_2d = flux_arr.flatten().reshape(arr_dims[0], arr_dims[1] * arr_dims[2])
+    flux_2d = flux_arr.flatten().reshape(
+        arr_dims[0], arr_dims[1] * arr_dims[2]
+    )
 
     # make the above into a dataframe
-    flux_df = pd.Dataframe(flux_2d)
+    flux_df = pd.DataFrame(flux_2d)
 
     # find the rolling average over time
     flux_df_ra = flux_df.rolling(
@@ -103,7 +109,7 @@ if __name__ == "__main__":
 
     # define I/O constants
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    FLUX_DIR = BASE_DIR + '/data/NEE_fluxes'
+    FLUX_DIR = BASE_DIR + '/data/NEE_fluxes_txt_scl'
 
     # define prefixes
     FLUX_PREFIX = 'nep.geos.4x5.'
@@ -113,7 +119,7 @@ if __name__ == "__main__":
     DIAGINFO_PATH = FLUX_DIR + '/diaginfo.dat'
 
     # output directory
-    OUTPUT_DIR = BASE_DIR + '/data/NEE_fluxes_txt_scl'
+    OUTPUT_DIR = BASE_DIR + '/data/NEE_fluxes_smooth'
 
     # create the new smoothed fluxes
     run(
