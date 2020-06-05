@@ -527,8 +527,8 @@ def run(
         true_full = cio.read_flux_txt_files(flux_files=true_flux_files)
         prior_full = cio.read_flux_txt_files(flux_files=prior_flux_files)
 
-        print('True flux arra shape: %s' % str(true_full.shape))
-        print('Prior flux arra shape: %s' % str(prior_full.shape))
+        print('True flux array shape: %s' % str(true_full.shape))
+        print('Prior flux array shape: %s' % str(prior_full.shape))
         assert true_full.shape[0] != 0    # very basic checks
         assert prior_full.shape[0] != 0
 
