@@ -16,7 +16,7 @@ slowest in the following order
 
 Author        : Mike Stanley
 Created       : June 2, 2020
-Last Modified : June 2, 2020
+Last Modified : June 8, 2020
 """
 
 from glob import glob
@@ -109,17 +109,17 @@ if __name__ == "__main__":
 
     # define I/O constants
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    FLUX_DIR = BASE_DIR + '/data/NEE_fluxes_txt_scl'
+    FLUX_DIR = BASE_DIR + '/data/JULES_YEAR_txt'
 
     # define prefixes
-    FLUX_PREFIX = 'nep.geos.4x5.'
+    FLUX_PREFIX = 'nep.geos.4x5.2010.'
 
     # tracer and diag paths
     TRACERINFO_PATH = FLUX_DIR + '/tracerinfo.dat'
     DIAGINFO_PATH = FLUX_DIR + '/diaginfo.dat'
 
     # output directory
-    OUTPUT_DIR = BASE_DIR + '/data/NEE_fluxes_smooth'
+    OUTPUT_DIR = BASE_DIR + '/data/JULES_smooth'
 
     # create the new smoothed fluxes
     run(
