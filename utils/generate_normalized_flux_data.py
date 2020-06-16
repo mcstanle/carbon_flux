@@ -144,8 +144,8 @@ if __name__ == "__main__":
 
     # define some I/O constants
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    PRIOR_FLUX_DIR = BASE_DIR + '/data/NEE_fluxes'
-    TRUE_FLUX_DIR = BASE_DIR + '/data/JULES'
+    PRIOR_FLUX_DIR = BASE_DIR + '/data/NEE_fluxes_smooth'
+    TRUE_FLUX_DIR = BASE_DIR + '/data/JULES_smooth'
 
     # using bpch files?
     BPCH_USE = False
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     DIAGINFO_PATH = PRIOR_FLUX_DIR + '/diaginfo.dat'
 
     # output directory
-    OUTPUT_DIR = BASE_DIR + '/data/NEE_fluxes_txt_scl'
+    OUTPUT_DIR = BASE_DIR + '/data/NEE_fluxes_smooth_scl'
 
     # create new scaled fluxes
     run(
