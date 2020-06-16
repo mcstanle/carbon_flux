@@ -109,17 +109,17 @@ if __name__ == "__main__":
 
     # define I/O constants
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    FLUX_DIR = BASE_DIR + '/data/JULES_YEAR_txt'
+    FLUX_DIR = BASE_DIR + '/data/NEE_fluxes_txt'
 
     # define prefixes
-    FLUX_PREFIX = 'nep.geos.4x5.2010.'
+    FLUX_PREFIX = 'nep.geos.4x5.'
 
     # tracer and diag paths
     TRACERINFO_PATH = FLUX_DIR + '/tracerinfo.dat'
     DIAGINFO_PATH = FLUX_DIR + '/diaginfo.dat'
 
     # output directory
-    OUTPUT_DIR = BASE_DIR + '/data/JULES_smooth'
+    OUTPUT_DIR = BASE_DIR + '/data/NEE_fluxes_smooth'
 
     # create the new smoothed fluxes
     run(
