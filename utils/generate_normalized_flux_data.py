@@ -4,7 +4,7 @@ the same total flux over their time domain.
 
 Author        : Mike Stanley
 Created       : June 2, 2020
-Last Modified : June 2, 2020
+Last Modified : June 25, 2020
 """
 
 from glob import glob
@@ -144,23 +144,23 @@ if __name__ == "__main__":
 
     # define some I/O constants
     BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux'
-    PRIOR_FLUX_DIR = BASE_DIR + '/data/NEE_fluxes_smooth'
-    TRUE_FLUX_DIR = BASE_DIR + '/data/JULES_smooth'
+    PRIOR_FLUX_DIR = BASE_DIR + '/data/JULES_smooth'
+    TRUE_FLUX_DIR = BASE_DIR + '/data/NEE_fluxes_smooth'
 
     # using bpch files?
     BPCH_USE = False
     LAT_LON_DIR = BASE_DIR + '/data/lon_lat_arrs'
 
     # define prefixes
-    PRIOR_FLUX_PREFIX = 'nep.geos.4x5.'
-    TRUE_FLUX_PREFIX = 'nep.geos.4x5.2010.'
+    PRIOR_FLUX_PREFIX = 'nep.geos.4x5.2010.'
+    TRUE_FLUX_PREFIX = 'nep.geos.4x5.'
 
     # tracer and diag paths
     TRACERINFO_PATH = PRIOR_FLUX_DIR + '/tracerinfo.dat'
     DIAGINFO_PATH = PRIOR_FLUX_DIR + '/diaginfo.dat'
 
     # output directory
-    OUTPUT_DIR = BASE_DIR + '/data/NEE_fluxes_smooth_scl'
+    OUTPUT_DIR = BASE_DIR + '/data/JULES_smooth_scl'
 
     # create new scaled fluxes
     run(

@@ -5,7 +5,7 @@ This script should be able to do the following
 
 Author        : Mike Stanley
 Created       : April 2, 2020
-Last Modified : April 17, 2020
+Last Modified : July 02, 2020
 
 ===============================================================================
 - USE
@@ -34,7 +34,6 @@ import numpy as np
 import os
 import pandas as pd
 import pathlib
-import PseudoNetCDF as pnc
 from tqdm import tqdm
 
 # custom functions
@@ -442,12 +441,12 @@ if __name__ == '__main__':
 
     # default values
     BASE_PATH = '/Users/mikestanley/Research/Carbon_Flux'
-    BASE_FILE_D = BASE_PATH + '/data/modeled_satellite_obs/JULES_unpert'
+    BASE_FILE_D = BASE_PATH + '/gc_adj_tutorial/OSSE_OBS'
     DATE_LB = '20100101'
     DATE_UB = '20100901'
     MODELED_XCO2 = BASE_PATH + '/data/forward_model_output/satellite_obs/\
-gosat_JULES_201001_201009/gctm.obs.01'
-    OUTPUT_DIR = BASE_PATH + '/data/modeled_satellite_obs/JULES_tutorial'
+gosat_CarbonTracker_smooth_201001_201009/gctm.model.01'
+    OUTPUT_DIR = BASE_PATH + '/data/modeled_satellite_obs/CarbonTracker_unpert'
     PERTURB = False
     PERTURB_DIR = BASE_PATH + '/data/modeled_satellite_obs/pert_files'
 
@@ -515,6 +514,8 @@ gosat_JULES_201001_201009/gctm.obs.01'
         )
 
     else:
+
+        import PseudoNetCDF as pnc
 
         # read in modeled XCO2 file
         model_xco2_arr, lon, lat = read_modeled_co2(

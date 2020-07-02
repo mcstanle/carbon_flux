@@ -619,8 +619,8 @@ if __name__ == '__main__':
     TRACERINFO_PATH = BASE_DIR + '/data/JULES/tracerinfo.dat'
     DIAGINFO_PATH = BASE_DIR + '/data/JULES/diaginfo.dat'
 
-    TRUE_F_LOC = BASE_DIR + '/data/JULES_YEAR_txt'
-    PRIOR_F_LOC = BASE_DIR + '/data/NEE_fluxes_txt_scl'
+    TRUE_F_LOC = BASE_DIR + '/data/JULES_smooth'
+    PRIOR_F_LOC = BASE_DIR + '/data/NEE_fluxes_smooth'
     PREFIX_TRUE = 'nep.geos.4x5.2010.'
     PREFIX_PRIOR = 'nep.geos.4x5.'
     FLUX_VARIABLE = 'CO2_SRCE_CO2bf'
@@ -644,7 +644,7 @@ if __name__ == '__main__':
         OPT_METHOD = 'BFGS'
 
     OPT_SF_SAVE_LOC = BASE_DIR + \
-        '/data/optimal_scale_factors/2010_JULES_true_CT_scl_prior_nc'
+        '/data/optimal_scale_factors/2010_JULES_true_smooth_CT_prior_smooth'
 
     # initialize the argparser
     parser = argparse.ArgumentParser()
