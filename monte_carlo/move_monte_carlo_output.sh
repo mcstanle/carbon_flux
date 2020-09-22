@@ -35,5 +35,5 @@ do
 done
 
 # grab the tracer and diag info from the first element
-cp $BASE_DIR/element_0/monte_carlo_element/runs/v8-02-01/geos5/tracerinfo.dat $DEST_DIR/
-cp $BASE_DIR/element_0/monte_carlo_element/runs/v8-02-01/geos5/diaginfo.dat $DEST_DIR/
+cp $BASE_DIR/src/element_0/monte_carlo_element/runs/v8-02-01/geos5/tracerinfo.dat $DEST_DIR/
+cp $BASE_DIR/src/element_0/monte_carlo_element/runs/v8-02-01/geos5/diaginfo.dat $DEST_DIR/
