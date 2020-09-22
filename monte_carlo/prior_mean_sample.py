@@ -91,6 +91,8 @@ def generate_N_samples(
     Returns:
         None -- writes files to output_dir
     """
+    assert output_dir
+
     if random_seeds is not None:
         assert len(random_seeds) == N
 
@@ -134,47 +136,47 @@ if __name__ == "__main__":
     parser.add_argument(
         '--IIPAR',
         help='longitude dimension',
-        default=LON_DEF
+        default=LON_DEF, type=int
     )
     parser.add_argument(
         '--JJPAR',
         help='latitude dimension',
-        default=LAT_DEF
+        default=LAT_DEF, type=int
     )
     parser.add_argument(
         '--MMSCL',
         help='months dimension',
-        default=MONTHS_DEF
+        default=MONTHS_DEF, type=int
     )
     parser.add_argument(
         '--NNEMS',
         help='emissions dimension',
-        default=NUM_EMS_DEF
+        default=NUM_EMS_DEF, type=int
     )
     parser.add_argument(
         '--N',
         help='number of output files',
-        default=None
+        default=None, type=int
     )
     parser.add_argument(
         '--output_dir',
         help='write location for output files',
-        default=None
+        default=None, type=str
     )
     parser.add_argument(
         '--mean',
         help='sample distribution mean',
-        default=MEAN
+        default=MEAN, type=float
     )
     parser.add_argument(
         '--std',
         help='sample distribution std',
-        default=STD
+        default=STD, type=float
     )
     parser.add_argument(
         '--random_state',
         help='random state',
-        default=RANDOM_STATE
+        default=RANDOM_STATE, type=int
     )
 
     args = parser.parse_args()
@@ -189,6 +191,8 @@ if __name__ == "__main__":
     else:
         random_seeds = None
 
+    print(random_seeds)
+
     # create the files
     generate_N_samples(
         N=args.N,
@@ -197,7 +201,7 @@ if __name__ == "__main__":
         jjpar=args.JJPAR,
         mmscl=args.MMSCL,
         nnems=args.NNEMS,
-        mean=args.MEAN,
-        std=args.STD,
+        mean=args.mean,
+        std=args.std,
         random_seeds=random_seeds
     )
