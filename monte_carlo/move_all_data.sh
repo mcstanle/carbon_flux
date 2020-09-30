@@ -15,7 +15,10 @@ mkdir $NEW_DIR
 # copy the results directory
 cp -r $ORIG_DIR/results $NEW_DIR
 
+# make a sub directory for the optimized data
+mkdir $NEW_DIR/OptData
+
 # copy each OptData
-for file in $(ls $ORIG_DIR/src/element_*); do
-    echo $file/$OPT_DATA_SUB_DIR
+for file in $(ls $ORIG_DIR/src); do
+    cp -r $ORIG_DIR/src/$file/$OPT_DATA_SUB_DIR/* $NEW_DIR/OptData/$file
 done
