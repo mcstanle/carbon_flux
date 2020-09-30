@@ -20,5 +20,11 @@ mkdir $NEW_DIR/OptData
 
 # copy each OptData
 for file in $(ls $ORIG_DIR/src); do
-    cp -r $ORIG_DIR/src/$file/$OPT_DATA_SUB_DIR/* $NEW_DIR/OptData/$file
+
+    # create the subdirectory
+    SUB_DIR_TARGET=$NEW_DIR/OptData/$file
+    mkdir $SUB_DIR_TARGET
+
+    # copy the files
+    cp -r $ORIG_DIR/src/$file/$OPT_DATA_SUB_DIR/* $SUB_DIR_TARGET
 done
