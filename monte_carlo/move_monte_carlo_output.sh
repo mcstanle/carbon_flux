@@ -15,8 +15,8 @@
 # =============================================================================
 
 # operational parameters
-NUM_ELEMENTS=5
-NUM_ITERATIONS=02   # this tells us which scale factor files to search for
+NUM_ELEMENTS=60
+NUM_ITERATIONS=12   # this tells us which scale factor files to search for
 
 # location information
 BASE_DIR=/glade/work/mcstanley/monte_carlo/V1
