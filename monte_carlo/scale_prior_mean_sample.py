@@ -43,9 +43,9 @@ if __name__ == "__main__":
     SCALE = 2
 
     # direcoties info
-    BASE_DIR = '/Users/mikestanley/Research/Carbon_Flux/data/monte_carlo'
-    SOURCE_DIR = BASE_DIR + '/testing_samples'
-    DEST_DIR = BASE_DIR + '/scaling_test_samples'
+    BASE_DIR = '/glade/work/mcstanley/monte_carlo/V1/data'
+    SOURCE_DIR = BASE_DIR + '/prior_means'
+    DEST_DIR = BASE_DIR + '/prior_means_scl3'
 
     # obtain the sample file names
     sample_file_nms = glob(SOURCE_DIR + '/*')
