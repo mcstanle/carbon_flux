@@ -50,8 +50,6 @@ if __name__ == "__main__":
     # obtain the sample file names
     sample_file_nms = glob(SOURCE_DIR + '/*')
 
-    print(sample_file_nms)
-
     for file_path in tqdm(sample_file_nms):
 
         # create an output path
