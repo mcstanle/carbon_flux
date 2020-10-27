@@ -20,7 +20,8 @@ export RUN_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 export NUM_THREADS=9
 
 # data locations
-export SAT_DATA_DIR=/glade/work/mcstanley/Data/OSSE_OBS
+export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_scl2point25/prior_samp_${ENS_NUM}.txt
+export SAT_DATA_DIR=$RUN_DIR/data/satellite_obs/samp_${ENS_NUM}
 
 # run the inversion
 ELEMENT_OUT_DIR=$RUN_DIR/$RUN_NAME/runs/v8-02-01/geos5
