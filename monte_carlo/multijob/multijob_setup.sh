@@ -58,6 +58,9 @@ do
 
 done
 
+# give executable privileges to the above scripts
+chmod ugo+x $BASE_DIR/${SCRIPT_STEM}_*
+
 # create the code directories for each element
 for i in $(seq 0 $( expr ${NUM_ELEMENTS} - 1 ))
 do
