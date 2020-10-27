@@ -61,6 +61,9 @@ done
 # create the code directories for each element
 for i in $(seq 0 $( expr ${NUM_ELEMENTS} - 1 ))
 do
+    # make the directory
+    mkdir $BASE_DIR/ens_${i}
+
     # make the directory by copying over contents
     cp -r $COMPILED_CODE_DIR/* $BASE_DIR/ens_${i}
 
