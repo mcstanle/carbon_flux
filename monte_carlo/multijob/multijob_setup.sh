@@ -2,7 +2,7 @@
 #
 # Script to set up a multijob directory
 #
-# 1. Creates cmdfile (list of file paths to the element bash scripts)
+# 1. Creates one cmdfile for every 4 jobs (list of file paths to the element bash scripts)
 # 2. Creates each bash script in the above file
 # 3. Creates directory for each element in the above
 #
@@ -22,7 +22,7 @@
 #
 # Author        : Mike Stanley
 # Created       : October 27, 2020
-# Last Modified : October 27, 2020
+# Last Modified : October 28, 2020
 #==============================================================================
 
 # operational params
@@ -35,11 +35,19 @@ SCRIPT_STEM=element
 DIR_STEP=ens
 
 # create and fill the cmdfile
-touch $BASE_DIR/cmdfile
-
+CMDFILE_NUM=0
+FILE_NUM=0
 for i in $(seq 0 $( expr ${NUM_ELEMENTS} - 1 ))
 do
-    echo $BASE_DIR/${SCRIPT_STEM}_${i}.sh >> $BASE_DIR/cmdfile
+    echo $BASE_DIR/${SCRIPT_STEM}_${i}.sh >> $BASE_DIR/cmdfile_$FILE_NUM
+
+    # update indices
+    CMDFILE_NUM=$((CMDFILE_NUM + 1))
+
+    if [ $((CMDFILE_NUM % 4)) -eq 0 ]; then
+        FILE_NUM=$((FILE_NUM + 1))
+    fi
+
 done
 
 # copy sample bash script and alter element number
