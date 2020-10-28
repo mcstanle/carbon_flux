@@ -5,6 +5,7 @@
 # 1. Creates one cmdfile for every 4 jobs (list of file paths to the element bash scripts)
 # 2. Creates each bash script in the above file
 # 3. Creates directory for each element in the above
+# 4. Creates PBS script for each cmdfile
 #
 # INPUTS
 # 1. Target directory where files and directories can be made
@@ -33,6 +34,7 @@ NUM_ELEMENTS=8
 # stems
 SCRIPT_STEM=element
 DIR_STEP=ens
+LAUNCH_STEM=launch_file
 
 # create and fill the cmdfile
 CMDFILE_NUM=0
@@ -78,4 +80,23 @@ do
     # make the directory by copying over contents
     cp -r $COMPILED_CODE_DIR/* $BASE_DIR/ens_${i}
 
+done
+
+# create PBS run files for each cmdfile
+CMD_FILE_NMS=$BASE_DIR/cmdfile*
+
+COUNT=0
+for file in $FILE_NMS
+do
+    # create the copy for cmdfile i
+    cp ./sample_launch_scipt $BASE_DIR/${LAUNCH_STEM}_${COUNT}
+
+    # replace the cmdfile name
+    replace_str="cmdfile_${COUNT}"
+    sed -i.bu "s/cmdfile/${replace_str}/" ${LAUNCH_STEM}_${COUNT}
+
+    # remove the created backup
+    rm ${LAUNCH_STEM}_${COUNT}.bu
+
+    COUNT=$((COUNT + 1))
 done

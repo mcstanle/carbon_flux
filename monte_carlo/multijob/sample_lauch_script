@@ -1,0 +1,26 @@
+#!/bin/bash
+### Job Name
+#PBS -N multijob_test
+### Project code
+#PBS -A UMEL0002
+#PBS -l walltime=12:00:00
+#PBS -q regular
+### Merge output and error files
+#PBS -j oe
+### Write stdout and stderr on runtime
+#PBS -k oe
+### Select 2 node(s) with 36 CPUs
+#PBS -l select=1:ncpus=36:mpiprocs=9:ompthreads=4
+### Send email on abort, begin and end
+#PBS -m abe
+### Specify mail recipient
+#PBS -M mcstanle@andrew.cmu.edu
+
+source /etc/profile.d/modules.sh
+ml mpt
+ml intel/19.1.1
+ml multijob
+
+JOB_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
+
+launch_cmdfile $JOB_DIR/cmdfile
