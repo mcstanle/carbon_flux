@@ -93,7 +93,7 @@ do
 
     # replace the cmdfile name
     replace_str="cmdfile_${COUNT}"
-    sed -i.bu "s/cmdfile/${replace_str}/" ${LAUNCH_STEM}_${COUNT}
+    sed -i.bu "s/cmdfile/${replace_str}/" $BASE_DIR/${LAUNCH_STEM}_${COUNT}
 
     # remove the created backup
     rm ${LAUNCH_STEM}_${COUNT}.bu
