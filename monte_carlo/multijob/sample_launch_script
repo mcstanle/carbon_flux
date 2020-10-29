@@ -9,7 +9,7 @@
 #PBS -j oe
 ### Write stdout and stderr on runtime
 #PBS -k oe
-### Select 2 node(s) with 36 CPUs
+### Select 1 node(s) with 36 CPUs
 #PBS -l select=1:ncpus=36:mpiprocs=9:ompthreads=4
 ### Send email on abort, begin and end
 #PBS -m abe
