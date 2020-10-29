@@ -9,7 +9,7 @@
 #
 # Author        : Mike Stanley
 # Created       : September 21, 2020
-# Last Modified : October 27, 2020
+# Last Modified : October 29, 2020
 #==============================================================================
 
 # define operational variables
@@ -20,7 +20,7 @@ export RUN_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 export NUM_THREADS=9
 
 # data locations
-export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_scl2point25/prior_samp_${ENS_NUM}.txt
+export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_scl1point875/prior_samp_${ENS_NUM}.txt
 export SAT_DATA_DIR=$RUN_DIR/data/satellite_obs/samp_${ENS_NUM}
 
 # run the inversion

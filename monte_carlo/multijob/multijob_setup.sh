@@ -23,13 +23,13 @@
 #
 # Author        : Mike Stanley
 # Created       : October 27, 2020
-# Last Modified : October 28, 2020
+# Last Modified : October 29, 2020
 #==============================================================================
 
 # operational params
 BASE_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 COMPILED_CODE_DIR=/glade/u/home/mcstanley/gc_adj_runs/monte_carlo_element
-NUM_ELEMENTS=8
+NUM_ELEMENTS=4
 
 # stems
 SCRIPT_STEM=element
