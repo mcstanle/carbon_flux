@@ -10,5 +10,5 @@ FILE_NMS=$BASE_DIR/launch_file*
 
 for file in $FILE_NMS
 do
-    echo $file
+    qsub $file
 done
