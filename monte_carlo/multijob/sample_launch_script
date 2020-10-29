@@ -21,6 +21,6 @@ ml mpt
 ml intel/19.1.1
 ml multijob
 
-JOB_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
+JOB_DIR=/glade/work/mcstanley/monte_carlo/multijob
 
 launch_cmdfile $JOB_DIR/cmdfile
