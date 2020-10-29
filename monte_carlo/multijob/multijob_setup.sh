@@ -89,7 +89,7 @@ COUNT=0
 for file in $CMD_FILE_NMS
 do
     # create the copy for cmdfile i
-    cp ./sample_launch_scipt $BASE_DIR/${LAUNCH_STEM}_${COUNT}
+    cp ./sample_launch_script $BASE_DIR/${LAUNCH_STEM}_${COUNT}
 
     # replace the cmdfile name
     replace_str="cmdfile_${COUNT}"
