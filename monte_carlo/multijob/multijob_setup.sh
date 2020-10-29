@@ -86,7 +86,7 @@ done
 CMD_FILE_NMS=$BASE_DIR/cmdfile*
 
 COUNT=0
-for file in $FILE_NMS
+for file in $CMD_FILE_NMS
 do
     # create the copy for cmdfile i
     cp ./sample_launch_scipt $BASE_DIR/${LAUNCH_STEM}_${COUNT}
