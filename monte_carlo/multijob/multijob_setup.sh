@@ -96,7 +96,7 @@ do
     sed -i.bu "s/cmdfile/${replace_str}/" $BASE_DIR/${LAUNCH_STEM}_${COUNT}
 
     # remove the created backup
-    rm ${LAUNCH_STEM}_${COUNT}.bu
+    rm $BASE_DIR/${LAUNCH_STEM}_${COUNT}.bu
 
     COUNT=$((COUNT + 1))
 done
