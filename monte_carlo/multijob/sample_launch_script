@@ -1,6 +1,6 @@
 #!/bin/bash
 ### Job Name
-#PBS -N multijob_test
+#PBS -N multijob_test_pu3
 ### Project code
 #PBS -A UMEL0002
 #PBS -l walltime=12:00:00
@@ -21,6 +21,6 @@ ml mpt
 ml intel/19.1.1
 ml multijob
 
-JOB_DIR=/glade/work/mcstanley/monte_carlo/multijob
+JOB_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 
 launch_cmdfile $JOB_DIR/cmdfile

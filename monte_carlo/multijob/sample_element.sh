@@ -9,18 +9,18 @@
 #
 # Author        : Mike Stanley
 # Created       : September 21, 2020
-# Last Modified : October 29, 2020
+# Last Modified : November 03, 2020
 #==============================================================================
 
 # define operational variables
 ENS_NUM=0
-export NUM_ITER=11
+export NUM_ITER=1
 export RUN_NAME=ens_${ENS_NUM}
-export RUN_DIR=/glade/work/mcstanley/monte_carlo/multijob
+export RUN_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 export NUM_THREADS=9
 
 # data locations
-export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_scl1point875/prior_samp_${ENS_NUM}.txt
+export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_scl3/prior_samp_${ENS_NUM}.txt
 export SAT_DATA_DIR=$RUN_DIR/data/satellite_obs/samp_${ENS_NUM}
 
 # run the inversion
