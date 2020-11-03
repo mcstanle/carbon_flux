@@ -18,7 +18,7 @@
 
 # operational parameters
 NUM_ELEMENTS=8
-NUM_ITERATIONS=1   # this tells us which scale factor files to search for
+NUM_ITERATIONS=01   # this tells us which scale factor files to search for
 
 # location information
 BASE_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
