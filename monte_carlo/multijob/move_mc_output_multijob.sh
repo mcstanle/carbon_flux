@@ -13,15 +13,15 @@
 #
 # Author        : Mike Stanley
 # Created       : October 30, 2020
-# Last Modified : October 30, 2020
+# Last Modified : November 3, 2020
 # =============================================================================
 
 # operational parameters
-NUM_ELEMENTS=60
-NUM_ITERATIONS=11   # this tells us which scale factor files to search for
+NUM_ELEMENTS=8
+NUM_ITERATIONS=1   # this tells us which scale factor files to search for
 
 # location information
-BASE_DIR=/glade/work/mcstanley/monte_carlo/multijob
+BASE_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 BASE_SF_LOC=/runs/v8-02-01/geos5/OptData
 DEST_DIR=$BASE_DIR/results
 
