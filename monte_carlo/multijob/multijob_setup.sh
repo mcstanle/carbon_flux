@@ -29,7 +29,7 @@
 # operational params
 BASE_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 COMPILED_CODE_DIR=/glade/u/home/mcstanley/gc_adj_runs/monte_carlo_element_const_start
-NUM_ELEMENTS=8
+NUM_ELEMENTS=12
 
 # stems
 SCRIPT_STEM=element

@@ -14,7 +14,7 @@
 
 # define operational variables
 ENS_NUM=0
-export NUM_ITER=1
+export NUM_ITER=2
 export RUN_NAME=ens_${ENS_NUM}
 export RUN_DIR=/glade/work/mcstanley/monte_carlo/multijob_test
 export NUM_THREADS=9
