@@ -20,7 +20,7 @@ export RUN_DIR=/glade/work/mcstanley/monte_carlo/multijob
 export NUM_THREADS=9
 
 # data locations
-export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_scl3/prior_samp_${ENS_NUM}.txt
+export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_scl2point25/prior_samp_${ENS_NUM}.txt
 export SAT_DATA_DIR=$RUN_DIR/data/satellite_obs/samp_${ENS_NUM}
 
 # run the inversion
