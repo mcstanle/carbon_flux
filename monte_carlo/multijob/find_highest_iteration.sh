@@ -23,11 +23,13 @@ do
     max_val=0
     for sf_file in $path/$ENS_STEM/gctm.sf.*
     do
-        opt_num=$(rev $sf_file | cut -c1-2)
+        opt_num=$(echo $sf_file | rev | cut -c1-2 | rev)
 
         if [[ $opt_num -gt $max_val ]]; then
             max_val=$opt_num
         fi
     done
-    "Ens_"$count" = "$max_val >> ./count_file.txt
+    echo "Ens_${count} = ${max_val}" >> ./count_file.txt
+
+    count=$((count + 1))
 done
