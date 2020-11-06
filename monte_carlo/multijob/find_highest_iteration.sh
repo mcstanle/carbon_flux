@@ -14,7 +14,7 @@ ENS_STEM=runs/v8-02-01/geos5/OptData
 mkdir -p $DEST_DIR/OptData
 
 # create a file to store the counts
-touch ./count_file.txt
+touch ./count_file_2point25.txt
 
 count=0
 for path in $MULTIJOB_DIR/ens*
