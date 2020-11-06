@@ -3,7 +3,7 @@
 #
 # Author        : Mike Stanley
 # Created       : October 28, 2020
-# Last Modified : November 04, 2020
+# Last Modified : November 05, 2020
 #==============================================================================
 BASE_DIR=/glade/work/mcstanley/monte_carlo/multijob
 FILE_NMS=$BASE_DIR/launch_file*
