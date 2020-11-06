@@ -11,10 +11,11 @@ MULTIJOB_DIR=$BASE_DIR/multijob
 ENS_STEM=runs/v8-02-01/geos5/OptData
 
 # make a directory for the raw results
-mkdir -p $DEST_DIR/OptData
+# mkdir -p $DEST_DIR/OptData
 
 # create a file to store the counts
-touch ./count_file_2point25.txt
+FILENAME=count_file_2point25.txt
+touch ./$FILENAME
 
 count=0
 for path in $MULTIJOB_DIR/ens*
@@ -29,7 +30,7 @@ do
             max_val=$opt_num
         fi
     done
-    echo "Ens_${count} = ${max_val}" >> ./count_file.txt
+    echo "Ens_${count} = ${max_val}" >> ./$FILENAME
 
     count=$((count + 1))
 done
