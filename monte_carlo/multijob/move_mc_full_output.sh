@@ -4,12 +4,12 @@
 #
 # Author        : Mike Stanley
 # Created       : November 3, 2020
-# Last Modified : November 3, 2020
+# Last Modified : November 5, 2020
 # =============================================================================
 BASE_DIR=/glade/work/mcstanley/monte_carlo
 MULTIJOB_DIR=$BASE_DIR/multijob
 ENS_STEM=runs/v8-02-01/geos5/OptData
-DEST_DIR=$BASE_DIR/data_archive/run_3
+DEST_DIR=$BASE_DIR/data_archive/run_4
 
 # make a directory for the raw results
 mkdir -p $DEST_DIR/OptData
