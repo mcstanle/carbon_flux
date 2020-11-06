@@ -26,7 +26,7 @@ do
     do
         opt_num=$(echo $sf_file | rev | cut -c1-2 | rev)
 
-        if [[ "$opt_num" -gt "$max_val" ]]; then
+        if [[ "${opt_num#0}" -gt "${max_val#0}" ]]; then
             max_val=$opt_num
         fi
     done
