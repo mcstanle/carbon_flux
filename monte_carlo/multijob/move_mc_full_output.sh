@@ -12,7 +12,7 @@ BASE_DIR=/glade/work/mcstanley/monte_carlo
 MULTIJOB_DIR=$BASE_DIR/multijob
 ENS_STEM=runs/v8-02-01/geos5/OptData
 FILE_STEM=runs/v8-02-01/geos5
-DEST_DIR=$BASE_DIR/data_archive/run_4
+DEST_DIR=$BASE_DIR/data_archive/run_5
 
 # make a directory for the raw results
 mkdir -p $DEST_DIR/OptData
