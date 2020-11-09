@@ -33,8 +33,8 @@ do
     cp -r $path/$ENS_STEM/* $DEST_DIR/OptData/element_$count
 
     # MOVE STDOUT AND STDERR
-    cp $path/$FILE_STEM/stdout_$count.txt $DEST_DIR/output_files/stdout_files
-    cp $path/$FILE_STEM/stderr_$count.txt $DEST_DIR/output_files/stderr_files
+    cp $path/$FILE_STEM/stdout.txt $DEST_DIR/output_files/stdout_files/stdout_$count.txt
+    cp $path/$FILE_STEM/stderr.txt $DEST_DIR/output_files/stderr_files/stderr_$count.txt
 
     echo "Element ${count}"
     count=$((count + 1))
