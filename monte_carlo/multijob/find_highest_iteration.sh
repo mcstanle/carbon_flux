@@ -4,7 +4,7 @@
 #
 # Author        : Mike Stanley
 # Created       : November 4, 2020
-# Last Modified : November 6, 2020
+# Last Modified : November 10, 2020
 # =============================================================================
 BASE_DIR=/glade/work/mcstanley/monte_carlo
 # MULTIJOB_DIR=$BASE_DIR/data_archive/run_3/OptData
@@ -15,7 +15,7 @@ ENS_STEM=runs/v8-02-01/geos5/OptData
 # mkdir -p $DEST_DIR/OptData
 
 # create a file to store the counts
-FILENAME=count_file_point44.txt
+FILENAME=count_file_3pu_sub.txt
 touch ./$FILENAME
 
 count=0
