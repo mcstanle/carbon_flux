@@ -28,7 +28,7 @@
 
 # operational params
 BASE_DIR=/glade/work/mcstanley/monte_carlo/multijob
-COMPILED_CODE_DIR=/glade/u/home/mcstanley/gc_adj_runs/monte_carlo_element_baseline_start
+COMPILED_CODE_DIR=/glade/u/home/mcstanley/gc_adj_runs/monte_carlo_element_const_start
 NUM_ELEMENTS=20
 
 # stems
