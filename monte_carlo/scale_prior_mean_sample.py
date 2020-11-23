@@ -6,7 +6,7 @@ with different variance, but using the same strucure.
 
 Author        : Mike Stanley
 Created       : Oct 2, 2020
-Last Modified : Nov 5, 2020
+Last Modified : Nov 23, 2020
 """
 from glob import glob
 import numpy as np
@@ -39,12 +39,12 @@ def translate_file(input_path, output_path, scale_factor):
 if __name__ == "__main__":
 
     # scaling value
-    SCALE = 0.29
+    SCALE = 0.46
 
     # direcoties info
     BASE_DIR = '/glade/work/mcstanley/monte_carlo/V1/data'
     SOURCE_DIR = BASE_DIR + '/prior_means'
-    DEST_DIR = BASE_DIR + '/prior_means_sclpoint44'
+    DEST_DIR = BASE_DIR + '/prior_means_sclpoint70'
 
     # obtain the sample file names
     sample_file_nms = glob(SOURCE_DIR + '/*')
