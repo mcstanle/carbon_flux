@@ -13,11 +13,11 @@
 #
 # Author        : Mike Stanley
 # Created       : October 30, 2020
-# Last Modified : November 16, 2020
+# Last Modified : November 23, 2020
 # =============================================================================
 
 # operational parameters
-NUM_ELEMENTS=4
+NUM_ELEMENTS=20
 NUM_ITERATIONS=11   # this tells us which scale factor files to search for
 
 # location information

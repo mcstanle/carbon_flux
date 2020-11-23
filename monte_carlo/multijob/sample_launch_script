@@ -1,6 +1,6 @@
 #!/bin/bash
 ### Job Name
-#PBS -N multijob_pupoint44
+#PBS -N multijob_pupoint7_20element
 ### Project code
 #PBS -A UMEL0002
 #PBS -l walltime=12:00:00
