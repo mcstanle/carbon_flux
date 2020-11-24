@@ -9,7 +9,7 @@
 #
 # Author        : Mike Stanley
 # Created       : September 21, 2020
-# Last Modified : November 16, 2020
+# Last Modified : November 24, 2020
 #==============================================================================
 
 # define operational variables
@@ -21,7 +21,7 @@ export RUN_DIR=$BASE_DIR/monte_carlo/multijob
 export NUM_THREADS=9
 
 # data locations
-export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_sclpoint70/prior_samp_${ENS_NUM}.txt
+export PRIOR_MEAN_FILE=$RUN_DIR/data/prior_means_sclpoint90/prior_samp_${ENS_NUM}.txt
 export SAT_DATA_DIR=$RUN_DIR/data/satellite_obs/samp_${ENS_NUM}
 export START_VEC_LOC=$BASE_DIR/Data/baseline_start_vectors/pu3_baseline_start.txt
 
